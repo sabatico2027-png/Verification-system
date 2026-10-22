@@ -118,7 +118,7 @@ function downloadCertificatePDF() {
     const canvas = document.getElementById('certCanvas');
     const imgData = canvas.toDataURL('image/jpeg', 1.0);
 
-    // Initialize jsPDF in correct orientation (Landscape or Portrait) based on dimensions
+    // Initialize jsPDF in correct orientation based on dimensions
     const isLandscape = canvas.width >= canvas.height;
     const { jsPDF } = window.jspdf;
     
@@ -144,7 +144,7 @@ function printCertificate() {
         <!DOCTYPE html>
         <html dir="rtl">
         <head><title>طباعة الشهادة</title></head>
-        <body style="margin:0; flex justify-content:center; align-items:center; display:flex; min-height:100vh; background:#fff;">
+        <body style="margin:0; justify-content:center; align-items:center; display:flex; min-height:100vh; background:#fff;">
             <img src="${dataUrl}" style="max-width:100%; max-height:100vh; object-fit:contain;" onload="window.print(); window.close();"/>
         </body>
         </html>
@@ -229,7 +229,7 @@ function updateAdminCanvasPreview() {
     ctx.fillText("اسم المستفيد الافتراضي معايَنة", posX, posY);
 }
 
-// 7. Publish Batch Certificates
+// 7. Publish Batch Certificates (Ultra-Robust Version)
 async function publishCertificatesBatch() {
     const fileInput = document.getElementById('templateFileInput');
     const eventTitle = document.getElementById('eventTitleInput').value.trim();
@@ -237,7 +237,7 @@ async function publishCertificatesBatch() {
     const namesRaw = document.getElementById('namesListInput').value.trim();
     const publishBtn = document.getElementById('publishBtn');
 
-    if (!fileInput.files[0]) {
+    if (!fileInput || !fileInput.files[0]) {
         alert("يرجى اختيار صورة قالب الشهادة أولاً.");
         return;
     }
@@ -255,29 +255,33 @@ async function publishCertificatesBatch() {
 
     try {
         const file = fileInput.files[0];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `template_${Date.now()}.${fileExt}`;
+        const cleanFileName = `tpl_${Date.now()}_${Math.floor(Math.random() * 1000)}.${file.name.split('.').pop()}`;
 
-        // Upload Template to Supabase Storage Bucket
+        let templatePublicUrl = "";
+
+        // محاولة رفع الملف إلى Supabase Storage
         const { data: storageData, error: storageError } = await supabaseClient.storage
             .from('templates')
-            .upload(fileName, file);
+            .upload(cleanFileName, file, { upsert: true });
 
-        if (storageError) throw storageError;
-
-        // Get Public URL
-        const { data: urlData } = supabaseClient.storage
-            .from('templates')
-            .getPublicUrl(fileName);
-
-        const templatePublicUrl = urlData.publicUrl;
+        if (!storageError) {
+            const { data: urlData } = supabaseClient.storage.from('templates').getPublicUrl(cleanFileName);
+            templatePublicUrl = urlData.publicUrl;
+        } else {
+            // حل بديل فوري في حال تعثر الرفع إلى Storage: تحويل الصورة إلى DataURL
+            templatePublicUrl = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(file);
+            });
+        }
 
         const posX = parseFloat(document.getElementById('posX').value);
         const posY = parseFloat(document.getElementById('posY').value);
         const fontSize = parseInt(document.getElementById('fontSize').value);
         const textColor = document.getElementById('textColor').value;
 
-        // Prepare Batch Objects
+        // تجهيز بيانات الشهادات
         const certificateRecords = namesArray.map(name => {
             const randomCode = Math.floor(1000 + Math.random() * 9000);
             return {
@@ -293,17 +297,19 @@ async function publishCertificatesBatch() {
             };
         });
 
-        // Insert into Database
+        // حفظ البيانات في قاعدة البيانات
         const { error: insertError } = await supabaseClient
             .from('certificates')
             .insert(certificateRecords);
 
-        if (insertError) throw insertError;
+        if (insertError) {
+            throw new Error(insertError.message);
+        }
 
         alert(`تم بنجاح توليد ونشر ${certificateRecords.length} شهادة!`);
         document.getElementById('namesListInput').value = '';
     } catch (err) {
-        alert("حدث خطأ أثناء العمليات: " + err.message);
+        alert("تنبيه أثناء حفظ الشهادات: " + err.message);
     } finally {
         publishBtn.disabled = false;
         publishBtn.innerText = "توليد ونشر جميع الشهادات الآن";
