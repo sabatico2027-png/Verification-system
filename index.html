@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة التحقق من الشهادات — منتدى السلام والسلم الدولي</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700;800;900&family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- jsPDF & html2canvas for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0e3a2f',    // أخضر داكن مؤسسي
+                            light: '#165243',   // أخضر متوسط
+                            gold: '#c5a059',    // ذهبي هادئ
+                            goldHover: '#b38e46',
+                            sand: '#fbf9f4',    // خلفية رملية هادئة
+                            accent: '#2a705c'
+                        }
+                    },
+                    fontFamily: {
+                        tajawal: ['Tajawal', 'sans-serif'],
+                        amiri: ['Amiri', 'serif'],
+                        ruqaa: ['Aref Ruqaa', 'serif'],
+                        cairo: ['Cairo', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f7f9f8;
+            color: #1a2e28;
+        }
+
+        .gold-border {
+            border-color: #c5a059;
+        }
+
+        .gold-gradient-bg {
+            background: linear-gradient(135deg, #0e3a2f 0%, #165243 100%);
+        }
+
+        .gold-text {
+            color: #c5a059;
+        }
+
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c5a059;
+            border-radius: 3px;
+        }
+
+        /* Certificate Canvas Container */
+        .cert-preview-container {
+            position: relative;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+
+        /* Modal styling */
+        .modal-backdrop {
+            background-color: rgba(14, 58, 47, 0.75);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-brand-gold selection:text-white">
+
+    <!-- Config Warning Modal (If Supabase not connected yet) -->
+    <div id="configNoticeModal" class="hidden fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border-2 border-brand-gold">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 class="text-xl font-bold text-brand-dark mb-2">تنبيه إعداد الاتصال بـ Supabase</h3>
+                <p class="text-sm text-gray-600 mb-4 leading-relaxed">
+                    يبدو أن البيانات الأساسية الخاصة بمشروع Supabase لم تُدخل بعد أو تعمل في النمط التجريبي المحلي. يرجى التأكد من ضبط قيم <code class="bg-gray-100 px-2 py-1 rounded text-red-600">SUPABASE_URL</code> و <code class="bg-gray-100 px-2 py-1 rounded text-red-600">SUPABASE_ANON_KEY</code>.
+                </p>
+                <div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs p-3 rounded-lg text-right mb-6">
+                    <strong>المشرف المصرح له:</strong>هنا أكتب البريد الإلكتروني للمشرف<br>
+                    يمكنك تشغيل التطبيق لوضع الإعدادات لاحقاً واستعراض الواجهة.
+                </div>
+                <button onclick="closeConfigNotice()" class="w-full py-2.5 bg-brand-dark text-white rounded-xl font-bold hover:bg-brand-light transition">
+                    فهمت ذلك، استمرار
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Navigation Header -->
+    <header class="gold-gradient-bg text-white shadow-lg border-b-4 border-brand-gold relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            
+            <!-- Logo & Title Section -->
+            <div class="flex items-center space-x-4 space-x-reverse">
+                <div class="w-12 h-12 rounded-full border-2 border-brand-gold bg-white flex items-center justify-center shadow-md overflow-hidden">
+                    <i class="fa-solid fa-dove text-brand-dark text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-2xl font-black text-white tracking-wide">
+                        منتدى السلام والسلم الدولي
+                    </h1>
+                    <p class="text-xs sm:text-sm text-brand-gold font-medium">
+                        منصة التحقق الرقمي من الشهادات والوثائق
+                    </p>
+                </div>
+            </div>
+
+            <!-- Admin Key Button -->
+            <div class="flex items-center space-x-3 space-x-reverse">
+                <button id="adminLoginBtn" onclick="openAdminModal()" class="flex items-center gap-2 bg-brand-dark/80 hover:bg-brand-gold hover:text-brand-dark text-brand-gold border border-brand-gold/40 hover:border-brand-gold px-3.5 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
+                    <i class="fa-solid fa-lock" id="adminLockIcon"></i>
+                    <span id="adminBtnText" class="hidden sm:inline">دخول المشرف</span>
+                </button>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow container mx-auto px-
+        <!-- PUBLIC VIEW: SEARCH CERTIFICATES -->
+        <section id="publicView" class="max-w-4xl mx-auto space-y-8">
+            
+            <!-- Hero Card -->
+            <div class="bg-white rounded-3xl p-6 sm:p-10 shadow-xl border border-gray-100 text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 right-0 h-2 gold-gradient-bg"></div>
+                
+                <div class="max-w-2xl mx-auto space-y-4">
+                    <span class="inline-block px-4 py-1.5 rounded-full bg-emerald-50 text-brand-dark text-xs font-bold border border-emerald-100">
+                        <i class="fa-solid fa-shield-halved text-brand-gold ml-1"></i> النظام الرسمي للتحقق والتوثيق
+                    </span>
+                    <h2 class="text-2xl sm:text-4xl font-extrabold text-brand-dark leading-tight">
+                        استعلام عن صحة الشهادات الصادرة
+                    </h2>
+                    <p class="text-gray-600 text-sm sm:text-base">
+                        يمكنك البحث برقم الشهادة الفريد أو بالاسم الكامل للمستفيد المعتمد في السجلات للتأكد من الموثوقية وتنزيل نسخة PDF رسمية.
+                    </p>
+                </div>
+
+                <!-- Search Input Form -->
+                <form id="searchForm" onsubmit="handleSearch(event)" class="mt-8 max-w-xl mx-auto flex flex-col sm:flex-row gap-3">
+                    <div class="relative flex-grow">
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                            <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                        </div>
+                        <input type="text" id="searchInput" required
+                            placeholder="أدخل الاسم الكامل أو رقم الشهادة (مثال: IPSF-2026-XXXX)" 
+                            class="w-full pr-11 pl-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-brand-gold focus:border-transparent focus:bg-white text-gray-800 placeholder-gray-400 text-sm sm:text-base outline-none transition duration-200">
+                    </div>
+                    <button type="submit" id="searchSubmitBtn" class="px-8 py-3.5 bg-brand-dark hover:bg-brand-light text-white font-bold rounded-2xl shadow-lg transition duration-200 flex items-center justify-center gap-2 whitespace-nowrap">
+                        <span>بحث</span>
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- SEARCH RESULTS AREA -->
+            <div id="searchResultsSection" class="hidden space-y-6">
+                <!-- Status Message -->
+                <div id="searchStatus" class="p-4 rounded-2xl text-center text-sm font-semibold hidden"></div>
+
+                <!-- Results List Container -->
+                <div id="resultsList" class="space-y-6"></div>
+            </div>
+
+        </section>
+
+        <!-- ADMIN VIEW: PANEL (Hidden by Default) -->
+        <section id="adminView" class="hidden space-y-8 max-w-6xl mx-auto">
+            
+            <!-- Dashboard Header -->
+            <div class="bg-brand-dark text-white p-6 rounded-3xl shadow-xl flex flex-col md:flex-row justify-between items-center gap-4 border-b-4 border-brand-gold">
+                <div>
+                    <div class="flex items-center gap-2 text-brand-gold font-bold text-sm mb-1">
+                        <i class="fa-solid fa-user-shield"></i> لوحة التحكم والإدارة المعليّة
+                    </div>
+                    <h2 class="text-2xl font-bold">إصدار وإدارة شهادات المنتدى</h2>
+                    <p class="text-xs text-gray-300 mt-1">المشرف الحالي: <span class="text-brand-gold font-mono" id="currentAdminEmail">aleezalsapaei@gmail.com</span></p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="logoutAdmin()" class="px-4 py-2 bg-red-600/80 hover:bg-red-600 text-white rounded-xl text-sm font-bold transition flex items-center gap-2">
+                        <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
+                    </button>
+                </div>
+            </div>
+
+            <!-- Admin Controls Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                <!-- Left Sidebar: Controls & Inputs -->
+                <div class="lg:col-span-5 space-y-6">
+                    
+                    <!-- Step 1: Upload Template -->
+                    <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100">
+                        <h3 class="text-base font-bold text-brand-dark mb-4 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-brand-gold text-brand-dark flex items-center justify-center text-xs">1</span>
+                            رفع صورة قالب الشهادة
+                        </h3>
+                        <input type="file" id="templateFileInput" accept="image/png, image/jpeg, image/jpg" class="hidden" onchange="handleTemplateSelect(event)">
+                        <label for="templateFileInput" class="border-2 border-dashed border-gray-300 hover:border-brand-gold rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer bg-gray-50 hover:bg-amber-50/30 transition text-center">
+                            <i class="fa-solid fa-cloud-arrow-up text-3xl text-brand-gold mb-2"></i>
+                            <span class="text-sm font-bold text-gray-700" id="uploadFileName">اضغط لاختيار صورة القالب (PNG / JPG)</span>
+                            <span class="text-xs text-gray-400 mt-1">النسبة الموصى بها: A4 أفقي (Landscape)</span>
+                        </label>
+                    </div>
+
+                    <!-- Step 2: Event Info -->
+                    <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100 space-y-4">
+                        <h3 class="text-base font-bold text-brand-dark flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-brand-gold text-brand-dark flex items-center justify-center text-xs">2</span>
+                            تفاصيل الفعالية والتاريخ
+                        </h3>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">اسم الفعالية / الدورة / المؤتمر</label>
+                            <input type="text" id="eventNameInput" placeholder="مثال: المؤتمر الدولي لبناء السلام 2026" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-gold outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">تاريخ الإصدار</label>
+                            <input type="date" id="issueDateInput" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-gold outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Text Positioning Controls -->
+                    <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100 space-y-4">
+                        <h3 class="text-base font-bold text-brand-dark flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-brand-gold text-brand-dark flex items-center justify-center text-xs">3</span>
+                            تخصيص مكان ومظهر اسم المستفيد
+                        </h3>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">الموقع الرأسي (Y%)</label>
+                                <input type="range" id="posYInput" min="10" max="90" value="48" oninput="updatePreviewStyle()" class="w-full accent-brand-gold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">الموقع الأفقي (X%)</label>
+                                <input type="range" id="posXInput" min="10" max="90" value="50" oninput="updatePreviewStyle()" class="w-full accent-brand-gold">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">حجم الخط (px)</label>
+                                <input type="number" id="fontSizeInput" value="38" min="12" max="120" onchange="updatePreviewStyle()" oninput="updatePreviewStyle()" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">لون الخط</label>
+                                <input type="color" id="textColorInput" value="#0e3a2f" onchange="updatePreviewStyle()" class="w-full h-9 rounded-xl cursor-pointer bg-gray-50 p-1 border border-gray-200">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">نوع الخط</label>
+                                <select id="fontFamilyInput" onchange="updatePreviewStyle()" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                                    <option value="'Amiri', serif">الأميري (Amiri)</option>
+                                    <option value="'Tajawal', sans-serif" selected>تجوال (Tajawal)</option>
+                                    <option value="'Aref Ruqaa', serif">عارف رقعة (Ruqaa)</option>
+                                    <option value="'Cairo', sans-serif">القاهرة (Cairo)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">وزن الخط</label>
+                                <select id="fontWeightInput" onchange="updatePreviewStyle()" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm">
+                                    <option value="400">عادي (Normal)</option>
+                                    <option value="700" selected>عريض (Bold)</option>
+                                    <option value="900">عريض جداً (Black)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Names List -->
+                    <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100 space-y-3">
+                        <h3 class="text-base font-bold text-brand-dark flex items-center justify-between">
+                            <span class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-brand-gold text-brand-dark flex items-center justify-center text-xs">4</span>
+                                قائمة أسماء المستفيدين
+                            </span>
+                            <span id="namesCountBadge" class="text-xs bg-brand-sand text-brand-dark px-2.5 py-1 rounded-full font-bold border border-brand-gold/30">
+                                0 اسم
+                            </span>
+                        </h3>
+                        <p class="text-xs text-gray-500">ضع اسم مستفيد واحد في كل سطر (يدعم 100 اسم أو أكثر).</p>
+                        <textarea id="namesListInput" rows="6" onkeyup="updateNamesCount()" placeholder="د. علي أحمد الصباح&#10;د. مريم عبد العزيز سالم&#10;أ. محمد إبراهيم الشريف" class="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-brand-gold leading-relaxed font-mono"></textarea>
+                    </div>
+
+                    <!-- Generate & Publish Button -->
+                    <button id="publishCertificatesBtn" onclick="generateAndPublishCertificates()" class="w-full py-4 bg-brand-dark hover:bg-brand-light text-brand-gold font-black rounded-2xl shadow-xl transition flex items-center justify-center gap-3 text-base border border-brand-gold">
+                        <i class="fa-solid fa-file-circle-check text-xl"></i>
+                        <span>توليد ونشر الشهادات الآن</span>
+                    </button>
+
+                </div>
+
+                <!-- Right Area: LIVE PREVIEW CANVAS -->
+                <div class="lg:col-span-7 space-y-4">
+                    <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100 sticky top-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-base font-bold text-brand-dark flex items-center gap-2">
+                                <i class="fa-solid fa-eye text-brand-gold"></i> المعاينة الحية للشهادة
+                            </h3>
+                            <span class="text-xs text-gray-400">تحديث مباشر</span>
+                        </div>
+
+                        <!-- Template Container -->
+                        <div class="w-full flex justify-center bg-gray-100 p-2 sm:p-4 rounded-xl border border-gray-200 overflow-hidden">
+                            <div id="certPreviewWrapper" class="cert-preview-container relative w-full overflow-hidden flex items-center justify-center">
+                                <img id="previewImage" src="https://placehold.co/1200x850/0e3a2f/c5a059?text=الرجاء+رفع+صورة+القالب+PNG/JPG" alt="معاينة الشهادة" class="w-full h-auto object-contain rounded-md">
+                                
+                                <!-- Dynamic Name Layer -->
+                                <div id="previewNameLayer" class="absolute pointer-events-none text-center transform -translate-x-1/2 -translate-y-1/2 whitespace-nowrap transition-all duration-75" style="top: 48%; left: 50%; font-size: 32px; color: #0e3a2f; font-family: 'Tajawal', sans-serif; font-weight: 700;">
+                                    اسم المستفيد يظهر هنا
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-xs text-brand-dark leading-relaxed">
+                            <i class="fa-solid fa-circle-info text-brand-gold ml-1"></i>
+                            <strong>تنويه:</strong> تأكد من محاذاة الاسم في المكان المخصص له بالضبط عبر شريط التحكم بالأبعاد قبل بدء التوليد النهائي.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- ADMIN LOGIN MODAL -->
+    <div id="adminLoginModal" class="hidden fixed inset-0 modal-backdrop z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-brand-gold/30 relative">
+            <button onclick="closeAdminModal()" class="absolute top-4 left-4 text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full flex items-center justify-center">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 bg-brand-dark text-brand-gold rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-md">
+                    <i class="fa-solid fa-user-lock text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-brand-dark">تسجيل دخول المشرف</h3>
+                <p class="text-xs text-gray-500 mt-1">خاص بالمشرف المصرح له فقط لمقر منتدى السلام</p>
+            </div>
+
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">البريد الإلكتروني للمشرف</label>
+                    <input type="email" id="adminEmailInput" value="aleezalsapaei@gmail.com" required class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-gold outline-none font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">كلمة المرور</label>
+                    <input type="password" id="adminPasswordInput" required placeholder="••••••••" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-brand-gold outline-none">
+                </div>
+                
+                <div id="loginErrorMsg" class="text-xs text-red-600 bg-red-50 p-3 rounded-xl hidden border border-red-100"></div>
+
+                <button type="submit" id="loginSubmitBtn" class="w-full py-3.5 bg-brand-dark hover:bg-brand-light text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                    <span>تسجيل الدخول</span>
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hidden Container for Offscreen High-Res Canvas Rendering for PDF Generation -->
+    <div id="pdfRenderContainer" class="fixed -left-[9999px] -top-[9999px] bg-white overflow-hidden" style="width: 1200px; height: 850px;">
+        <div id="pdfCertElement" class="relative w-full h-full">
+            <img id="pdfImgElement" src="" class="w-full h-full object-fill">
+            <div id="pdfNameElement" class="absolute pointer-events-none text-center transform -translate-x-1/2 -translate-y-1/2 whitespace-nowrap"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-brand-dark text-white border-t border-brand-gold/30 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-300">
+            <div class="flex items-center space-x-2 space-x-reverse">
+                <i class="fa-solid fa-dove text-brand-gold"></i>
+                <span>جميع الحقوق محفوظة © 2026 — <strong>منتدى السلام والسلم الدولي</strong></span>
+            </div>
+            <div class="flex gap-4 text-gray-400">
+                <a href="#" class="hover:text-brand-gold transition">الخصوصية</a>
+                <a href="#" class="hover:text-brand-gold transition">الشروط والأحكام</a>
+                <a href="#" class="hover:text-brand-gold transition">اتصل بنا</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MAIN APP JAVASCRIPT LOGIC -->
+    <script>
+        /* ==========================================================================
+           1. CONFIGURATION & SUPABASE INITIALIZATION
+           ========================================================================== */
+        // Replace with your Supabase Project Credentials or environment configuration
+        const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT_ID.supabase.co";
+        const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+
+        let supabaseClient = null;
+        let isSupabaseReady = false;
+
+        try {
+            if (SUPABASE_URL && !SUPABASE_URL.includes("YOUR_SUPABASE_PROJECT_ID")) {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                isSupabaseReady = true;
+            }
+        } catch (e) {
+            console.warn("Supabase init fallback mode active:", e);
+        }
+
+        // Mock in-memory database fallback for seamless testing if Supabase is not connected
+        const LOCAL_MOCK_CERTIFICATES = [
+            {
+                id: "1",
+                cert_number: "IPSF-2026-8942",
+                recipient_name: "د. علي أحمد الصباح",
+                event_name: "مؤتمر السلام الدائم والتعايش الدولي 2026",
+                issue_date: "2026-05-15",
+                template_url: "https://placehold.co/1200x850/0e3a2f/c5a059?text=شهادة+تقدير+رسمية",
+                pos_x: 50,
+                pos_y: 48,
+                font_size: 38,
+                text_color: "#0e3a2f",
+                font_family: "'Tajawal', sans-serif",
+                font_weight: "700"
+            }
+        ];
+
+        /* ==========================================================================
+           2. DOM STATE & GLOBALS
+           ========================================================================== */
+        let currentUploadedImageBase64 = null;
+        let currentAdminUser = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Check auth state on load
+            if (isSupabaseReady) {
+                supabaseClient.auth.getSession().then(({ data: { session } }) => {
+                    if (session?.user?.email === "aleezalsapaei@gmail.com") {
+                        currentAdminUser = session.user;
+                        showAdminView();
+                    }
+                });
+            } else {
+                document.getElementById('configNoticeModal').classList.remove('hidden');
+            }
+
+            // Set default issue date to today
+            document.getElementById('issueDateInput').valueAsDate = new Date();
+            updatePreviewStyle();
+        });
+
+        function closeConfigNotice() {
+            document.getElementById('configNoticeModal').classList.add('hidden');
+        }
+
+        /* ==========================================================================
+           3. PUBLIC SEARCH LOGIC
+           ========================================================================== */
+        async function handleSearch(event) {
+            event.preventDefault();
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+
+            const searchStatus = document.getElementById('searchStatus');
+            const resultsList = document.getElementById('resultsList');
+            const searchResultsSection = document.getElementById('searchResultsSection');
+
+            searchResultsSection.classList.remove('hidden');
+            searchStatus.className = "p-4 rounded-2xl text-center text-sm font-semibold bg-gray-100 text-gray-600 block";
+            searchStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin ml-2"></i> جاري البحث في السجلات المعتمدة...';
+            resultsList.innerHTML = '';
+
+            let results = [];
+
+            if (isSupabaseReady) {
+                try {
+                    // Search by cert_number OR recipient_name
+                    const { data, error } = await supabaseClient
+                        .from('certificates')
+                        .select('*')
+                        .or(`recipient_name.ilike.%${query}%,cert_number.ilike.%${query}%`);
+
+                    if (error) throw error;
+                    results = data || [];
+                } catch (err) {
+                    console.error("Supabase search error:", err);
+                }
+            } else {
+                // Fallback mock search
+                results = LOCAL_MOCK_CERTIFICATES.filter(c => 
+                    c.recipient_name.includes(query) || c.cert_number.toLowerCase().includes(query.toLowerCase())
+                );
+            }
+
+            if (results.length === 0) {
+                searchStatus.className = "p-4 rounded-2xl text-center text-sm font-semibold bg-amber-50 text-amber-800 border border-amber-200 block";
+                searchStatus.innerHTML = `<i class="fa-solid fa-circle-exclamation ml-1"></i> لم يتم العثور على أي شهادة مسجلة باسم أو رقم: "<strong>${escapeHtml(query)}</strong>". يرجى التأكد من كتابة الاسم كما هو في الشهادة.`;
+            } else {
+                searchStatus.className = "p-4 rounded-2xl text-center text-sm font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 block";
+                searchStatus.innerHTML = `<i class="fa-solid fa-circle-check ml-1"></i> تم العثور على (${results.length}) شهادة معتمدة.`;
+
+                results.forEach(cert => {
+                    resultsList.appendChild(createCertificateCard(cert));
+                });
+            }
+        }
+
+        function createCertificateCard(cert) {
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-3xl p-6 shadow-md border border-gray-100 flex flex-col md:flex-row gap-6 items-center justify-between transition hover:shadow-lg";
+
+            card.innerHTML = `
+                <div class="space-y-2 text-center md:text-right w-full">
+                    <div class="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                        <span class="bg-brand-dark text-brand-gold text-xs px-3 py-1 rounded-full font-mono font-bold">
+                            رقم الشهادة: ${escapeHtml(cert.cert_number)}
+                        </span>
+                        <span class="bg-emerald-100 text-emerald-800 text-xs px-3 py-1 rounded-full font-bold">
+                            <i class="fa-solid fa-check-double ml-1"></i> موثقة ورسمية
+                        </span>
+                    </div>
+                    <h3 class="text-xl font-black text-brand-dark">${escapeHtml(cert.recipient_name)}</h3>
+                    <p class="text-sm text-gray-600">
+                        <i class="fa-solid fa-award text-brand-gold ml-1"></i> ${escapeHtml(cert.event_name || 'فعالية منتدى السلام الدولي')}
+                    </p>
+                    <p class="text-xs text-gray-400">
+                        <i class="fa-solid fa-calendar-day ml-1"></i> تاريخ الإصدار: ${escapeHtml(cert.issue_date || 'غير محدد')}
+                    </p>
+                </div>
+
+                <div class="w-full md:w-auto flex-shrink-0">
+                    <button onclick='downloadPDFDirect(${JSON.stringify(cert).replace(/'/g, "&apos;")})' class="w-full md:w-auto px-6 py-3.5 bg-brand-gold hover:bg-brand-goldHover text-brand-dark font-black rounded-2xl shadow-md transition flex items-center justify-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-file-pdf text-lg"></i>
+                        <span>تنزيل الشهادة PDF</span>
+                    </button>
+                </div>
+            `;
+            return card;
+        }
+
+        /* ==========================================================================
+           4. PDF GENERATION ENGINE (jsPDF + html2canvas)
+           ========================================================================== */
+        async function downloadPDFDirect(cert) {
+            const pdfContainer = document.getElementById('pdfRenderContainer');
+            const pdfImg = document.getElementById('pdfImgElement');
+            const pdfName = document.getElementById('pdfNameElement');
+
+            // Set up template image and name style in offscreen DOM
+            pdfImg.src = cert.template_url;
+
+            pdfName.innerText = cert.recipient_name;
+            pdfName.style.top = `${cert.pos_y || 48}%`;
+            pdfName.style.left = `${cert.pos_x || 50}%`;
+            pdfName.style.fontSize = `${cert.font_size || 38}px`;
+            pdfName.style.color = cert.text_color || '#0e3a2f';
+            pdfName.style.fontFamily = cert.font_family || "'Tajawal', sans-serif";
+            pdfName.style.fontWeight = cert.font_weight || '700';
+
+            // Wait for image loading
+            await new Promise(resolve => {
+                if (pdfImg.complete) resolve();
+                else pdfImg.onload = resolve;
+            });
+
+            try {
+                const canvas = await html2canvas(document.getElementById('pdfCertElement'), {
+                    scale: 2, // High resolution capture
+                    useCORS: true,
+                    logging: false
+                });
+
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                const { jsPDF } = window.jspdf;
+                
+                // A4 Landscape orientation: 297mm x 210mm
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210);
+                pdf.save(`شهادة_${cert.recipient_name.replace(/\s+/g, '_')}_${cert.cert_number}.pdf`);
+            } catch (err) {
+                alert('حدث خطأ أثناء توليد ملف الـ PDF: ' + err.message);
+            }
+        }
+
+        /* ==========================================================================
+           5. ADMIN LOGIN & AUTHENTICATION
+           ========================================================================== */
+        function openAdminModal() {
+            if (currentAdminUser) {
+                showAdminView();
+            } else {
+                document.getElementById('adminLoginModal').classList.remove('hidden');
+            }
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminLoginModal').classList.add('hidden');
+        }
+
+        async function handleAdminLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('adminEmailInput').value.trim();
+            const password = document.getElementById('adminPasswordInput').value;
+            const errorMsg = document.getElementById('loginErrorMsg');
+            const submitBtn = document.getElementById('loginSubmitBtn');
+
+            errorMsg.classList.add('hidden');
+
+            if (email !== "aleezalsapaei@gmail.com") {
+                errorMsg.innerText = "عذراً، هذا البريد الإلكتروني غير مصرح له بوجوب الصلاحيات لغايات الإدارة.";
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحقق...';
+
+            if (isSupabaseReady) {
+                try {
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+
+                    currentAdminUser = data.user;
+                    closeAdminModal();
+                    showAdminView();
+                } catch (err) {
+                    errorMsg.innerText = "فشل تسجيل الدخول: " + (err.message || "كلمة المرور غير صحيحة");
+                    errorMsg.classList.remove('hidden');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>تسجيل الدخول</span> <i class="fa-solid fa-arrow-left"></i>';
+                }
+            } else {
+                // Testing mode fallback
+                setTimeout(() => {
+                    currentAdminUser = { email };
+                    closeAdminModal();
+                    showAdminView();
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>تسجيل الدخول</span> <i class="fa-solid fa-arrow-left"></i>';
+                }, 600);
+            }
+        }
+
+        function showAdminView() {
+            document.getElementById('publicView').classList.add('hidden');
+            document.getElementById('adminView').classList.remove('hidden');
+            document.getElementById('adminLockIcon').className = 'fa-solid fa-unlock text-emerald-400';
+            document.getElementById('adminBtnText').innerText = 'لوحة التحكم';
+        }
+
+        function logoutAdmin() {
+            if (isSupabaseReady) {
+                supabaseClient.auth.signOut();
+            }
+            currentAdminUser = null;
+            document.getElementById('adminView').classList.add('hidden');
+            document.getElementById('publicView').classList.remove('hidden');
+            document.getElementById('adminLockIcon').className = 'fa-solid fa-lock';
+            document.getElementById('adminBtnText').innerText = 'دخول المشرف';
+        }
+
+        /* ==========================================================================
+           6. ADMIN PANEL CONTROLS & LIVE PREVIEW
+           ========================================================================== */
+        function handleTemplateSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('uploadFileName').innerText = file.name;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                currentUploadedImageBase64 = e.target.result;
+                document.getElementById('previewImage').src = currentUploadedImageBase64;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updatePreviewStyle() {
+            const posY = document.getElementById('posYInput').value;
+            const posX = document.getElementById('posXInput').value;
+            const fontSize = document.getElementById('fontSizeInput').value;
+            const color = document.getElementById('textColorInput').value;
+            const fontFamily = document.getElementById('fontFamilyInput').value;
+            const fontWeight = document.getElementById('fontWeightInput').value;
+
+            const nameLayer = document.getElementById('previewNameLayer');
+            nameLayer.style.top = `${posY}%`;
+            nameLayer.style.left = `${posX}%`;
+            nameLayer.style.fontSize = `${fontSize}px`;
+            nameLayer.style.color = color;
+            nameLayer.style.fontFamily = fontFamily;
+            nameLayer.style.fontWeight = fontWeight;
+            
+            // Preview name demo text if textarea is empty
+            const namesText = document.getElementById('namesListInput').value.trim();
+            const firstLine = namesText.split('\n')[0];
+            nameLayer.innerText = firstLine || "اسم المستفيد يظهر هنا";
+        }
+
+        function updateNamesCount() {
+            const text = document.getElementById('namesListInput').value.trim();
+            const namesArr = text ? text.split('\n').filter(n => n.trim().length > 0) : [];
+            document.getElementById('namesCountBadge').innerText = `${namesArr.length} اسم`;
+            updatePreviewStyle();
+        }
+
+        /* ==========================================================================
+           7. BULK CERTIFICATE GENERATION & PUBLISHING
+           ========================================================================== */
+        async function generateAndPublishCertificates() {
+            const eventName = document.getElementById('eventNameInput').value.trim();
+            const issueDate = document.getElementById('issueDateInput').value;
+            const namesText = document.getElementById('namesListInput').value.trim();
+            const publishBtn = document.getElementById('publishCertificatesBtn');
+
+            if (!currentUploadedImageBase64 && !isSupabaseReady) {
+                alert('يرجى اختيار صورة قالب الشهادة أولاً.');
+                return;
+            }
+
+            const namesList = namesText.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+            if (namesList.length === 0) {
+                alert('يرجى إدخال اسم مستفيد واحد على الأقل في القائمة.');
+                return;
+            }
+
+            publishBtn.disabled = true;
+            publishBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري توليد ونشر ${namesList.length} شهادة...`;
+
+            try {
+                let templateUrl = currentUploadedImageBase64;
+
+                // Step 1: Upload Template Image to Supabase Storage if enabled
+                if (isSupabaseReady && document.getElementById('templateFileInput').files[0]) {
+                    const file = document.getElementById('templateFileInput').files[0];
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `templates/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+                    const { data: uploadData, error: uploadError } = await supabaseClient
+                        .storage
+                        .from('certificate-templates')
+                        .upload(fileName, file);
+
+                    if (uploadError) throw uploadError;
+
+                    const { data: urlData } = supabaseClient
+                        .storage
+                        .from('certificate-templates')
+                        .getPublicUrl(fileName);
+
+                    templateUrl = urlData.publicUrl;
+                }
+
+                // Step 2: Prepare Batch Certificate Objects
+                const certificatesBatch = namesList.map((name) => {
+                    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+                    return {
+                        cert_number: `IPSF-2026-${randomSuffix}`,
+                        recipient_name: name,
+                        event_name: eventName || 'منتدى السلام والسلم الدولي',
+                        issue_date: issueDate,
+                        template_url: templateUrl || 'https://placehold.co/1200x850/0e3a2f/c5a059?text=شهادة+تقدير+رسمية',
+                        pos_x: parseFloat(document.getElementById('posXInput').value),
+                        pos_y: parseFloat(document.getElementById('posYInput').value),
+                        font_size: parseInt(document.getElementById('fontSizeInput').value),
+                        text_color: document.getElementById('textColorInput').value,
+                        font_family: document.getElementById('fontFamilyInput').value,
+                        font_weight: document.getElementById('fontWeightInput').value
+                    };
+                });
+
+                // Step 3: Insert into Supabase / Local database
+                if (isSupabaseReady) {
+                    const { error: insertError } = await supabaseClient
+                        .from('certificates')
+                        .insert(certificatesBatch);
+
+                    if (insertError) throw insertError;
+                } else {
+                    // Fallback to local memory
+                    certificatesBatch.forEach(c => LOCAL_MOCK_CERTIFICATES.unshift(c));
+                }
+
+                alert(`تم بنجاح توليد ونشر (${certificatesBatch.length}) شهادة مخصصة وجعلها متاحة في محرك البحث العام!`);
+                
+                // Clear inputs
+                document.getElementById('namesListInput').value = '';
+                updateNamesCount();
+
+            } catch (err) {
+                alert('حدث خطأ أثناء عملية النشر: ' + err.message);
+            } finally {
+                publishBtn.disabled = false;
+                publishBtn.innerHTML = `<i class="fa-solid fa-file-circle-check text-xl"></i><span>توليد ونشر الشهادات الآن</span>`;
+            }
+        }
+
+        // Helper function for XSS protection
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
