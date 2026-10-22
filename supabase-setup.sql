@@ -1,82 +1,46 @@
-sql
--- ============================================================================
--- منتدى السلام والسلم الدولي - منصة التحقق من الشهادات
--- Supabase Database Setup & Row Level Security (RLS) Policies
--- ============================================================================
-
--- 1. إنشاء جدول الشهادات الرئيسي (Certificates Table)
+-- 1. إنشاء جدول الشهادات
 CREATE TABLE IF NOT EXISTS public.certificates (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    cert_number VARCHAR(100) NOT NULL UNIQUE,
     recipient_name TEXT NOT NULL,
-    event_name TEXT,
+    cert_number TEXT UNIQUE NOT NULL,
+    event_title TEXT,
     issue_date DATE,
     template_url TEXT NOT NULL,
-    pos_x NUMERIC DEFAULT 50,
-    pos_y NUMERIC DEFAULT 48,
-    font_size INT DEFAULT 38,
-    text_color VARCHAR(30) DEFAULT '#0e3a2f',
-    font_family VARCHAR(100) DEFAULT ''Tajawal', sans-serif',
-    font_weight VARCHAR(20) DEFAULT '700',
+    pos_x FLOAT DEFAULT 50,
+    pos_y FLOAT DEFAULT 50,
+    font_size INT DEFAULT 48,
+    text_color VARCHAR(20) DEFAULT '#0A3225',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- إنشاء كشاف للبحث السريع بالاسم ورقم الشهادة
-CREATE INDEX IF NOT EXISTS idx_cert_search ON public.certificates (recipient_name, cert_number);
-
--- 2. تفعيل نظام الحماية RLS (Row Level Security)
+-- 2. تفعيل حماية حقل الصفوف (Row Level Security - RLS)
 ALTER TABLE public.certificates ENABLE ROW LEVEL SECURITY;
 
--- 3. سياسة السماح للعموم والجمهور بالبحث والاطلاع فقط (Public Read Access)
-CREATE POLICY "Public users can view published certificates" 
+-- 3. سياسة السماح للعموم بالبحث والقراءة فقط
+CREATE POLICY "Allow public read access" 
 ON public.certificates 
 FOR SELECT 
-TO public 
 USING (true);
 
--- 4. سياسة حصر عمليات الإضافة والتعديل والحذف على المشرف المصرح له فقط عبر بريده الإلكتروني
-CREATE POLICY "Only authorized admin can insert certificates" 
+-- 4. سياسة حصر الإضافة والتعديل والحذف على المشرف المصرح له فقط
+CREATE POLICY "Allow admin write access" 
 ON public.certificates 
-FOR INSERT 
+FOR ALL 
 TO authenticated 
-WITH CHECK (
-    auth.jwt() ->> 'email' = 'aleezalsapaei@gmail.com'
-);
+USING (auth.jwt() ->> 'email' = 'aleezalsapaei@gmail.com')
+WITH CHECK (auth.jwt() ->> 'email' = 'aleezalsapaei@gmail.com');
 
-CREATE POLICY "Only authorized admin can update certificates" 
-ON public.certificates 
-FOR UPDATE 
-TO authenticated 
-USING (
-    auth.jwt() ->> 'email' = 'aleezalsapaei@gmail.com'
-);
-
-CREATE POLICY "Only authorized admin can delete certificates" 
-ON public.certificates 
-FOR DELETE 
-TO authenticated 
-USING (
-    auth.jwt() ->> 'email' = 'aleezalsapaei@gmail.com'
-);
-
--- 5. إعداد مجلد التخزين للقوالب (Storage Bucket Setup)
+-- 5. إنشاء مجلد التخزين العام للقوالب (Storage Bucket)
 INSERT INTO storage.buckets (id, name, public) 
-VALUES ('certificate-templates', 'certificate-templates', true)
+VALUES ('templates', 'templates', true)
 ON CONFLICT (id) DO NOTHING;
 
--- سياسة قراءة الصور للجميع (Public Bucket Read)
-CREATE POLICY "Public Access for certificate templates" 
-ON storage.objects 
-FOR SELECT 
-TO public 
-USING (bucket_id = 'certificate-templates');
+-- 6. سياسات الوصول لمجلد التخزين
+CREATE POLICY "Public Template Access" 
+ON storage.objects FOR SELECT 
+USING (bucket_id = 'templates');
 
--- سياسة رفع الصور للمشرف فقط
-CREATE POLICY "Admin Upload Access for certificate templates" 
-ON storage.objects 
-FOR INSERT 
+CREATE POLICY "Admin Template Upload Access" 
+ON storage.objects FOR INSERT 
 TO authenticated 
-WITH CHECK (
-    bucket_id = 'certificate-templates' AND
-    auth.jwt() ->> 'email' = 'aleezalsapaei@gmail.com'
-);
+WITH CHECK (bucket_id = 'templates' AND auth.jwt() ->> 'email' = 'aleezalsapaei@gmail.com');
