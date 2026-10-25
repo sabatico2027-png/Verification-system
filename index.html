@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة التحقق وإصدار الشهائد الرسمية | IPSF</title>
+    <title>منصة التحقق وإصدار الشهادات الرسمية | IPSF</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome -->
@@ -46,83 +46,111 @@
                     <p class="text-xs text-gray-300">منتدى السلام والسلم الدولي</p>
                 </div>
             </div>
-            <a href="https://sabatico2027-png.github.io/ipsf-official/" class="bg-diplomatic-gold text-diplomatic-dark px-4 py-2 rounded-xl font-bold text-xs shadow hover:bg-diplomatic-goldHover transition">
-                <i class="fa-solid fa-arrow-right ml-1"></i> البوابة الرسمية الأم
-            </a>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleModal('loginModal')" class="bg-white/10 hover:bg-diplomatic-gold hover:text-diplomatic-dark text-diplomatic-gold border border-diplomatic-border px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-lock"></i> لوحة الإدارة
+                </button>
+                <a href="https://sabatico2027-png.github.io/ipsf-official/" class="bg-diplomatic-gold text-diplomatic-dark px-4 py-2 rounded-xl font-bold text-xs shadow hover:bg-diplomatic-goldHover transition">
+                    البوابة الأم <i class="fa-solid fa-arrow-right mr-1"></i>
+                </a>
+            </div>
         </div>
     </header>
 
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-8 flex-1 space-y-8 max-w-4xl">
         
-        <!-- Control & Settings Card (التفعيل والخيارات) -->
-        <div class="bg-white p-6 rounded-3xl shadow-md border border-diplomatic-border space-y-6">
-            <div class="flex flex-wrap justify-between items-center border-b pb-4 gap-4">
-                <div>
-                    <h2 class="text-xl font-black text-diplomatic-dark">لوحة التحكم وإدارة المستفيدين</h2>
-                    <p class="text-xs text-gray-500">إضافة المستفيدين، التحكم بالصور، وتصدير الدفعات</p>
-                </div>
-
-                <!-- زر التصدير دفعة واحدة -->
-                <button onclick="exportAllCertificatesPDF()" class="bg-diplomatic-deep hover:bg-diplomatic-dark text-diplomatic-gold px-5 py-2.5 rounded-xl font-bold text-xs shadow-lg flex items-center gap-2 transition">
-                    <i class="fa-solid fa-file-pdf text-sm"></i> تصدير كل الشهائد احدة (ZIP/PDF)
-                </button>
-            </div>
-
-            <!-- مفتاح التفعيل لخاصية إرفاق الصورة -->
-            <div class="bg-diplomatic-sand p-4 rounded-2xl flex items-center justify-between border border-diplomatic-border">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-diplomatic-dark text-diplomatic-gold flex items-center justify-center font-bold">
-                        <i class="fa-solid fa-image"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-sm text-diplomatic-dark">خيار إرفاق صورة المستفيد على الشهادة</h4>
-                        <p class="text-xs text-gray-500">عند التفعيل، يظهر حقل رفع الصورة بجانب الاسم. عند الإيقاف، يعمل النظام بالاسم فقط.</p>
-                    </div>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="togglePhotoFeature" onchange="togglePhotoInputState()" class="sr-only peer">
-                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-diplomatic-gold"></div>
-                </label>
-            </div>
-
-            <!-- نموذج إضافة مستفيد جديد -->
-            <form onsubmit="addBeneficiary(event)" class="space-y-4 pt-2">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 mb-1">اسم المستفيد الثلاثي/الرباعي:</label>
-                        <input type="text" id="beneficiaryName" required placeholder="مثال: العز عبدالسلام السبئي" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-diplomatic-gold focus:outline-none">
-                    </div>
-
-                    <!-- حقل رفع الصورة (يظهر/يختفي حسب مفتاح التفعيل) -->
-                    <div id="photoInputWrapper" class="hidden">
-                        <label class="block text-xs font-bold text-gray-700 mb-1">صورة المستفيد الشخصية:</label>
-                        <input type="file" id="beneficiaryPhoto" accept="image/*" class="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs bg-white">
-                    </div>
-                </div>
-
-                <button type="submit" id="submitBtn" class="w-full bg-diplomatic-gold hover:bg-diplomatic-goldHover text-diplomatic-dark py-3 rounded-xl font-black text-xs shadow-md transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-plus-circle text-sm"></i> إضافة مستفيد جديد وتوليد الشهادة (+)
-                </button>
-            </form>
-        </div>
-
-        <!-- قائمة المستفيدين الحاليين -->
+        <!-- Public Search Box / Beneficiaries List -->
         <div class="bg-white p-6 rounded-3xl shadow-md border border-diplomatic-border space-y-4">
-            <h3 class="text-lg font-black text-diplomatic-dark border-b pb-3 flex items-center justify-between">
+            <h3 class="text-xl font-black text-diplomatic-dark border-b pb-3 flex items-center justify-between">
                 <span>سجل المستفيدين والشهادات الصادرة</span>
                 <span id="beneficiariesCount" class="text-xs bg-diplomatic-gold/20 text-diplomatic-dark px-3 py-1 rounded-full font-bold">0 مستفيد</span>
             </h3>
 
             <div id="beneficiariesList" class="space-y-3">
-                <!-- يتم تعبئتها ديناميكياً -->
                 <p class="text-center text-gray-400 py-6 text-xs">جاري تحميل المستفيدين...</p>
             </div>
         </div>
 
     </main>
 
-    <!-- Hidden Export Container for Batch PDF Generation -->
+    <!-- ADMIN MODAL (لوحة تسجيل الدخول والتحكم الإداري) -->
+    <div id="loginModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 md:p-8 space-y-6 relative border-t-8 border-diplomatic-gold max-h-[90vh] overflow-y-auto">
+            <button onclick="toggleModal('loginModal')" class="absolute top-4 left-4 text-gray-400 hover:text-red-500 text-xl font-bold">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Login Form Section -->
+            <div id="loginFormSection" class="space-y-4">
+                <div class="text-center space-y-2">
+                    <div class="w-14 h-14 bg-diplomatic-dark text-diplomatic-gold rounded-full flex items-center justify-center mx-auto text-2xl shadow">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-diplomatic-dark">تسجيل دخول المشرف</h3>
+                    <p class="text-xs text-gray-500">أدخل بيانات المشرف للوصول إلى لوحة إضافة المستفيدين والتصدير</p>
+                </div>
+
+                <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">البريد الإلكتروني</label>
+                        <input type="email" id="loginEmail" required class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-diplomatic-gold focus:outline-none text-xs" placeholder="aleezalsapaei@gmail.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">كلمة المرور</label>
+                        <input type="password" id="loginPassword" required class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-diplomatic-gold focus:outline-none text-xs" placeholder="••••••••">
+                    </div>
+                    <button type="submit" id="loginSubmitBtn" class="w-full bg-diplomatic-dark text-diplomatic-gold py-3 rounded-xl font-bold text-xs shadow transition hover:bg-black">
+                        دخول لوحة التحكم
+                    </button>
+                </form>
+            </div>
+
+            <!-- Admin Panel Section (يظهر بعد تسجيل الدخول بنجاح) -->
+            <div id="adminPanelSection" class="hidden space-y-6">
+                <div class="flex justify-between items-center border-b pb-3">
+                    <h3 class="font-bold text-base text-diplomatic-dark"><i class="fa-solid fa-sliders text-diplomatic-gold"></i> لوحة إدارة الشهادات</h3>
+                    <button onclick="logoutAdmin()" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl font-bold text-xs hover:bg-red-100">
+                        تسجيل الخروج
+                    </button>
+                </div>
+
+                <!-- زر التصدير الجماعي -->
+                <button onclick="exportAllCertificatesPDF()" class="w-full bg-diplomatic-deep hover:bg-diplomatic-dark text-diplomatic-gold py-3 rounded-xl font-bold text-xs shadow flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-file-pdf text-sm"></i> تصدير كل الشهادات دفعة واحدة بصيغة PDF
+                </button>
+
+                <!-- مفتاح التفعيل لخاصية إرفاق الصورة -->
+                <div class="bg-diplomatic-sand p-4 rounded-2xl flex items-center justify-between border border-diplomatic-border">
+                    <div>
+                        <h4 class="font-bold text-xs text-diplomatic-dark">تفعيل إرفاق صورة المستفيد</h4>
+                        <p class="text-[10px] text-gray-500">إظهار حقل رفع الصورة بجانب الاسم</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="togglePhotoFeature" onchange="togglePhotoInputState()" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-diplomatic-gold"></div>
+                    </label>
+                </div>
+
+                <!-- نموذج إضافة مستفيد جديد -->
+                <form onsubmit="addBeneficiary(event)" class="space-y-3 bg-gray-50 p-4 rounded-2xl border border-gray-200">
+                    <h4 class="font-black text-xs text-diplomatic-dark mb-2">إضافة مستفيد جديد (+)</h4>
+                    <div>
+                        <input type="text" id="beneficiaryName" required placeholder="اسم المستفيد الثلاثي/الرباعي" class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-xs bg-white">
+                    </div>
+                    <div id="photoInputWrapper" class="hidden">
+                        <label class="block text-[11px] font-bold text-gray-600 mb-1">صورة المستفيد الشخصية:</label>
+                        <input type="file" id="beneficiaryPhoto" accept="image/*" class="w-full px-3 py-2 rounded-xl border border-gray-300 text-xs bg-white">
+                    </div>
+                    <button type="submit" id="submitBtn" class="w-full bg-diplomatic-gold hover:bg-diplomatic-goldHover text-diplomatic-dark py-2.5 rounded-xl font-black text-xs shadow transition">
+                        حفظ وإضافة المستفيد
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Export Container -->
     <div id="batchExportContainer" class="hidden"></div>
 
     <!-- Footer -->
@@ -132,7 +160,6 @@
 
     <!-- Script Logic -->
     <script>
-        // Supabase Config (استخدم نفس بيانات مشروعك)
         const SUPABASE_URL = "https://gplpgtujmzfssjawmrdr.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_Z2DuXZYM1a4wExtD6h59FA_LfIJfo5a";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -141,7 +168,40 @@
             fetchBeneficiaries();
         });
 
-        // تبديل ظهور حقل الصورة بناءً على مفتاح التفعيل العلوي
+        function toggleModal(modalId) {
+            document.getElementById(modalId).classList.toggle('hidden');
+        }
+
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const btn = document.getElementById('loginSubmitBtn');
+
+            btn.disabled = true;
+            btn.innerText = "جاري المصادقة...";
+
+            try {
+                const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+
+                document.getElementById('loginFormSection').classList.add('hidden');
+                document.getElementById('adminPanelSection').classList.remove('hidden');
+                alert("تم تسجيل الدخول بنجاح.");
+            } catch (err) {
+                alert("فشل تسجيل الدخول: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "دخول لوحة التحكم";
+            }
+        }
+
+        function logoutAdmin() {
+            supabaseClient.auth.signOut();
+            document.getElementById('adminPanelSection').classList.add('hidden');
+            document.getElementById('loginFormSection').classList.remove('hidden');
+        }
+
         function togglePhotoInputState() {
             const isChecked = document.getElementById('togglePhotoFeature').checked;
             const wrapper = document.getElementById('photoInputWrapper');
@@ -157,24 +217,21 @@
             }
         }
 
-        // رفع الصورة إلى Supabase Storage
         async function uploadPhoto(file) {
             if (!file) return "";
             const fileExt = file.name.split('.').pop();
-            const fileName = `cert_${Date.now()}_${Math.random().toString(36.substring(2,7))}.${fileExt}`;
+            const fileName = `cert_${Date.now()}_${Math.random().toString(36).substring(2,7)}.${fileExt}`;
             const { data, error } = await supabaseClient.storage.from('uploads').upload(`certificates/${fileName}`, file);
             if (error) throw error;
             const { data: urlData } = supabaseClient.storage.from('uploads').getPublicUrl(`certificates/${fileName}`);
             return urlData.publicUrl;
         }
 
-        // جلب المستفيدين وعرضهم
         async function fetchBeneficiaries() {
             const container = document.getElementById('beneficiariesList');
             const countBadge = document.getElementById('beneficiariesCount');
 
             try {
-                // افترضنا جدول باسم certificates في Supabase (أو أنشئه بنفس الحقول: id, name, photo_url, cert_code)
                 const { data, error } = await supabaseClient.from('certificates').select('*').order('created_at', { ascending: false });
                 if (error) throw error;
 
@@ -194,19 +251,16 @@
                                 <p class="text-[11px] text-gray-500">رقم التحقق: <span class="font-mono text-diplomatic-deep">${item.cert_code || 'IPSF-2026'}</span></p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="downloadSinglePDF('${item.id}', '${item.name}', '${item.photo_url || ''}')" class="bg-diplomatic-dark text-diplomatic-gold px-3 py-2 rounded-xl font-bold text-xs shadow hover:bg-black transition">
-                                <i class="fa-solid fa-download ml-1"></i> تحميل PDF
-                            </button>
-                        </div>
+                        <button onclick="downloadSinglePDF('${item.id}', '${item.name}', '${item.photo_url || ''}')" class="bg-diplomatic-dark text-diplomatic-gold px-3.5 py-2 rounded-xl font-bold text-xs shadow hover:bg-black transition">
+                            <i class="fa-solid fa-download ml-1"></i> تحميل PDF
+                        </button>
                     </div>
                 `).join('');
             } catch (err) {
-                container.innerHTML = `<p class="text-center text-red-500 py-4 text-xs">خطأ في جلب السجلات: تأكد من جدول certificates في Supabase.</p>`;
+                container.innerHTML = `<p class="text-center text-red-500 py-4 text-xs">خطأ في جلب السجلات.</p>`;
             }
         }
 
-        // إضافة مستفيد جديد
         async function addBeneficiary(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
@@ -228,7 +282,7 @@
                 const { error } = await supabaseClient.from('certificates').insert([{ name, photo_url, cert_code }]);
                 if (error) throw error;
 
-                alert("تمت إضافة المستفيد بنجاح وتوليد الشهادة الرسمية!");
+                alert("تمت إضافة المستفيد بنجاح!");
                 document.getElementById('beneficiaryName').value = "";
                 document.getElementById('beneficiaryPhoto').value = "";
                 fetchBeneficiaries();
@@ -236,11 +290,10 @@
                 alert("خطأ أثناء الإضافة: " + err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-plus-circle text-sm"></i> إضافة مستفيد جديد وتوليد الشهادة (+)`;
+                btn.innerText = "حفظ وإضافة المستفيد";
             }
         }
 
-        // تصدير شهادة فردية
         function downloadSinglePDF(id, name, photoUrl) {
             const element = document.createElement('div');
             element.innerHTML = getCertificateHTML(name, photoUrl);
@@ -257,7 +310,6 @@
             });
         }
 
-        // تصدير كل الشهادات دفعة واحدة
         async function exportAllCertificatesPDF() {
             try {
                 const { data, error } = await supabaseClient.from('certificates').select('*');
@@ -267,7 +319,7 @@
                     return;
                 }
 
-                alert(`جاري تجهيز وتصدير ${data.length} شهادة دفعة واحدة. قد يستغرق ذلك بضع ثوانٍ...`);
+                alert(`جاري تجهيز وتصدير ${data.length} شهادة دفعة واحدة...`);
 
                 const batchContainer = document.getElementById('batchExportContainer');
                 batchContainer.innerHTML = data.map(item => `
@@ -301,7 +353,6 @@
             }
         }
 
-        // قالب HTML للشهادة الفردية
         function getCertificateHTML(name, photoUrl) {
             return `
                 <div style="width: 297mm; height: 210mm; background: #fff; font-family: 'Tajawal', sans-serif; direction: rtl; padding: 25mm; text-align: center; box-sizing: border-box; border: 12px solid #041C14; position: relative;">
