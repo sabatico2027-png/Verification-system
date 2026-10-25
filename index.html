@@ -12,9 +12,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- jsPDF & html2pdf Libraries -->
+    <!-- jsPDF Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -22,9 +21,9 @@
                 extend: {
                     colors: {
                         brand: {
-                            dark: '#0A3225',    // أخضر داكن مؤسسي
-                            primary: '#13503B', // أخضر السلام
-                            gold: '#D4AF37',    // ذهبي فاخر
+                            dark: '#0A3225',    
+                            primary: '#13503B', 
+                            gold: '#D4AF37',    
                             goldDark: '#AA820A',
                             light: '#F4F7F5'
                         }
@@ -48,9 +47,6 @@
             overflow-x: hidden;
             overflow-y: visible !important;
         }
-        .gold-border {
-            border-image: linear-gradient(to right, #D4AF37, #F3E5AB, #D4AF37) 1;
-        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col justify-between">
@@ -68,7 +64,6 @@
                 </div>
             </div>
 
-            <!-- Admin Login Button -->
             <div>
                 <button id="adminLoginBtn" onclick="toggleModal('loginModal')" class="p-2.5 px-3 bg-brand-primary hover:bg-opacity-80 rounded-lg border border-brand-gold text-brand-gold transition-all duration-200 text-sm flex items-center gap-2 shadow" title="تسجيل دخول المشرف">
                     <i class="fa-solid fa-lock"></i>
@@ -79,8 +74,8 @@
     </header>
 
     <!-- Main Public Search Container -->
-    <main class="flex-grow container mx-auto px-4 py-8 sm:py-12 max-w-4xl">
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-10 mb-8 text-center relative overflow-hidden">
+    <main class="flex-grow container mx-auto px-4 py-8 sm:py-12 max-w-4xl space-y-8">
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-10 text-center relative overflow-hidden">
             <div class="absolute top-0 right-0 w-32 h-32 bg-brand-gold/10 rounded-full -mr-16 -mt-16 pointer-events-none"></div>
             
             <i class="fa-solid fa-shield-halved text-5xl text-brand-primary mb-4"></i>
@@ -102,10 +97,11 @@
             </form>
         </div>
 
+        <!-- Dynamic Public Ads Container (تحت شريط البحث مباشرة) -->
+        <div id="publicAdsContainer" class="space-y-4"></div>
+
         <!-- Search Results Section -->
-        <div id="resultsContainer" class="hidden space-y-6">
-            <!-- Dynamic Content Injected Here -->
-        </div>
+        <div id="resultsContainer" class="hidden space-y-6"></div>
 
         <!-- Certificate Preview & Download Modal -->
         <div id="certPreviewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
@@ -118,12 +114,10 @@
                     <button onclick="closePreviewModal()" class="text-gray-400 hover:text-gray-700 text-2xl font-bold">&times;</button>
                 </div>
 
-                <!-- Canvas Rendered Preview -->
                 <div class="flex justify-center bg-gray-100 p-2 sm:p-4 rounded-xl border overflow-hidden">
                     <canvas id="certCanvas" class="max-w-full h-auto rounded shadow-lg border border-gray-300"></canvas>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="flex flex-wrap gap-4 justify-center sm:justify-end pt-2 border-t">
                     <button onclick="closePreviewModal()" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl font-semibold text-gray-700 transition">إلغاء</button>
                     <button id="printCertBtn" onclick="printCertificate()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md transition flex items-center gap-2">
@@ -137,14 +131,14 @@
         </div>
     </main>
 
-    <!-- Admin Panel Container (Hidden by default) -->
+    <!-- Admin Panel Container (لوحة التحكم الشاملة والجديدة) -->
     <div id="adminPanel" class="hidden fixed inset-0 bg-gray-900 bg-opacity-95 z-50 overflow-y-auto p-4 sm:p-8">
         <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl border border-brand-gold overflow-hidden my-6">
             <div class="bg-brand-dark text-white p-6 flex justify-between items-center border-b-2 border-brand-gold">
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-user-shield text-brand-gold text-2xl"></i>
                     <div>
-                        <h2 class="text-xl font-bold">لوحة إدارة إصدار الشهادات</h2>
+                        <h2 class="text-xl font-bold">لوحة إدارة إصدار الشهادات والإعلانات</h2>
                         <p class="text-xs text-brand-gold">منتدى السلام والسلم الدولي</p>
                     </div>
                 </div>
@@ -155,27 +149,46 @@
 
             <div class="p-6 sm:p-8 space-y-8">
                 
-                <!-- زر تصدير كل الشهادات دفعة واحدة -->
-                <div class="bg-brand-light p-4 rounded-xl border border-brand-gold/30 flex justify-between items-center">
-                    <div>
-                        <h4 class="font-bold text-brand-dark text-sm">أرشيف وتصدير الدفعات</h4>
-                        <p class="text-xs text-gray-600">تحميل كافة الشهادات الصادرة دفعة واحدة بصيغة PDF</p>
+                <!-- الإحصائيات المتقدمة -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-brand-light p-4 rounded-xl border border-brand-gold/30 text-center">
+                        <i class="fa-solid fa-certificate text-2xl text-brand-primary mb-1"></i>
+                        <h4 class="text-xs text-gray-500 font-bold">إجمالي الشهادات</h4>
+                        <p id="statTotalCerts" class="text-2xl font-black text-brand-dark">0</p>
                     </div>
-                    <button onclick="exportAllCertificatesPDF()" class="px-5 py-2.5 bg-brand-dark hover:bg-brand-primary text-brand-gold rounded-xl font-bold text-xs shadow transition flex items-center gap-2">
-                        <i class="fa-solid fa-file-pdf"></i> تصدير الكل دفعة واحدة
-                    </button>
+                    <div class="bg-brand-light p-4 rounded-xl border border-brand-gold/30 text-center">
+                        <i class="fa-solid fa-download text-2xl text-brand-primary mb-1"></i>
+                        <h4 class="text-xs text-gray-500 font-bold">إجمالي التنزيلات</h4>
+                        <p id="statTotalDownloads" class="text-2xl font-black text-brand-dark">0</p>
+                    </div>
+                    <div class="bg-brand-light p-4 rounded-xl border border-brand-gold/30 text-center">
+                        <i class="fa-solid fa-eye text-2xl text-brand-primary mb-1"></i>
+                        <h4 class="text-xs text-gray-500 font-bold">مرات البحث والزيارة</h4>
+                        <p id="statTotalViews" class="text-2xl font-black text-brand-dark">0</p>
+                    </div>
                 </div>
 
-                <!-- مفتاح التفعيل لخاصية إرفاق صورة المستفيد -->
-                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 flex items-center justify-between">
-                    <div>
-                        <h4 class="font-bold text-sm text-brand-dark">خيار إرفاق صورة المستفيد</h4>
-                        <p class="text-xs text-gray-500">تمكين أو تعطيل إدراج صورة المستفيد بجانب الاسم على الشهادة</p>
+                <!-- إدارة الإعلانات تحت شريط البحث -->
+                <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 space-y-4">
+                    <h3 class="text-lg font-bold text-brand-dark flex items-center gap-2">
+                        <i class="fa-solid fa-bullhorn text-brand-primary"></i> إدارة الإعلانات (صورة ونَص أو فيديو)
+                    </h3>
+                    <form onsubmit="publishAd(event)" class="space-y-3">
+                        <input type="text" id="adTitle" placeholder="عنوان الإعلان" required class="w-full p-3 border rounded-xl text-sm">
+                        <textarea id="adContent" placeholder="نص الإعلان..." class="w-full p-3 border rounded-xl text-sm"></textarea>
+                        <input type="url" id="adMediaUrl" placeholder="رابط صورة أو فيديو إعلاني (URL)" class="w-full p-3 border rounded-xl text-sm">
+                        <button type="submit" class="bg-brand-primary text-white px-6 py-2.5 rounded-xl font-bold text-xs">نشر الإعلان بالواجهة</button>
+                    </form>
+                </div>
+
+                <!-- إدارة السجلات (تعديل وحذف الشهادات) -->
+                <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 space-y-4">
+                    <h3 class="text-lg font-bold text-brand-dark flex items-center gap-2">
+                        <i class="fa-solid fa-list-check text-brand-primary"></i> إدارة وتعديل وحذف الشهادات الصادرة
+                    </h3>
+                    <div id="adminCertificatesList" class="space-y-2 max-h-60 overflow-y-auto">
+                        <!-- تضاف السجلات للتعديل والحذف هنا -->
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="togglePhotoFeature" onchange="togglePhotoInputState()" class="sr-only peer">
-                        <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-gold"></div>
-                    </label>
                 </div>
 
                 <!-- Step 1: Upload Template -->
@@ -186,15 +199,6 @@
                     </h3>
                     <input type="file" id="templateFileInput" accept="image/png, image/jpeg" onchange="handleTemplateUpload(event)"
                            class="w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-brand-primary file:text-white hover:file:bg-brand-dark cursor-pointer border rounded-xl p-2 bg-white">
-                </div>
-
-                <!-- حقل رفع صورة المستفيد الفردي (يظهر فقط عند تفعيل المفتاح) -->
-                <div id="photoInputWrapper" class="hidden bg-gray-50 p-6 rounded-xl border border-gray-200 space-y-2">
-                    <h3 class="text-lg font-bold text-brand-dark flex items-center gap-2">
-                        <span class="w-7 h-7 rounded-full bg-brand-primary text-white flex items-center justify-center text-sm">★</span>
-                        صورة المستفيد الشخصية للشهادة الحالية
-                    </h3>
-                    <input type="file" id="beneficiaryPhotoFile" accept="image/*" class="w-full text-sm text-gray-500 border rounded-xl p-2 bg-white">
                 </div>
 
                 <!-- Step 2: Event Details & Names List -->
@@ -290,9 +294,6 @@
         </div>
     </div>
 
-    <!-- Hidden Batch Export Container -->
-    <div id="batchExportContainer" class="hidden"></div>
-
     <!-- Footer -->
     <footer class="bg-brand-dark text-gray-300 py-6 border-t-2 border-brand-gold text-center text-xs sm:text-sm mt-12">
         <div class="container mx-auto px-4">
@@ -305,33 +306,39 @@
     <script src="config.js"></script>
     <script src="app.js"></script>
     <script>
-        // دالة التحكم بإظهار/إخفاء حقل رفع الصورة بناءً على مفتاح التفعيل العلوي
-        function togglePhotoInputState() {
-            const isChecked = document.getElementById('togglePhotoFeature').checked;
-            const wrapper = document.getElementById('photoInputWrapper');
-            if (isChecked) {
-                wrapper.classList.remove('hidden');
-            } else {
-                wrapper.classList.add('hidden');
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchPublicAds();
+        });
+
+        async function fetchPublicAds() {
+            const container = document.getElementById('publicAdsContainer');
+            if(!container) return;
+            try {
+                const { data } = await supabaseClient.from('ads').select('*').eq('is_active', true);
+                if(data && data.length > 0) {
+                    container.innerHTML = data.map(ad => `
+                        <div class="bg-gradient-to-r from-brand-dark to-brand-primary text-white p-6 rounded-2xl shadow-lg border border-brand-gold flex flex-col sm:flex-row items-center gap-4">
+                            ${ad.media_url ? `<img src="${ad.media_url}" class="w-full sm:w-32 h-24 object-cover rounded-xl border border-brand-gold">` : ''}
+                            <div class="flex-1 text-right">
+                                <span class="bg-brand-gold text-brand-dark text-[10px] font-black px-2.5 py-0.5 rounded-full">إعلان رسمي</span>
+                                <h3 class="text-lg font-bold text-brand-gold mt-1">${ad.title}</h3>
+                                <p class="text-xs text-gray-200 mt-1">${ad.content || ''}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch(e) { console.error(e); }
         }
 
-        // دالة تصدير كافة الشهادات دفعة واحدة بصيغة PDF
-        async function exportAllCertificatesPDF() {
-            try {
-                const { data, error } = await supabaseClient.from('certificates').select('*');
-                if (error) throw error;
-                if (!data || data.length === 0) {
-                    alert("لا توجد شهادات مسجلة لتصديرها.");
-                    return;
-                }
+        async function publishAd(e) {
+            e.preventDefault();
+            const title = document.getElementById('adTitle').value;
+            const content = document.getElementById('adContent').value;
+            const media_url = document.getElementById('adMediaUrl').value;
 
-                alert(`جاري تجهيز وتصدير ${data.length} شهادة دفعة واحدة. يرجى الانتظار قليلاً...`);
-                // يمكن ربطها بمكتبة html2pdf أو توليدها بالتتابع حسب دالّات app.js الخاصة بك
-                console.log("جاري تصدير الأرشيف الشامل:", data);
-            } catch (err) {
-                alert("خطأ أثناء التصدير الشامل: " + err.message);
-            }
+            const { error } = await supabaseClient.from('ads').insert([{ title, content, media_url }]);
+            if(error) alert(error.message);
+            else { alert("تم نشر الإعلان بنجاح تحت شريط البحث!"); fetchPublicAds(); }
         }
     </script>
 </body>
