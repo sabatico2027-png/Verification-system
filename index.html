@@ -57,7 +57,6 @@
             </div>
 
             <div>
-                <!-- زر فتح نافذة لوحة التحكم الإشرافية -->
                 <button id="adminLoginBtn" onclick="openLoginModal()" class="p-2.5 px-4 bg-brand-primary hover:bg-opacity-90 rounded-xl border border-brand-gold text-brand-gold font-bold transition text-xs sm:text-sm flex items-center gap-2 shadow cursor-pointer">
                     <i class="fa-solid fa-lock"></i>
                     <span>لوحة التحكم</span>
@@ -76,10 +75,9 @@
             <i class="fa-solid fa-shield-halved text-5xl text-brand-primary mb-4"></i>
             <h2 class="text-2xl sm:text-3xl font-extrabold text-brand-dark mb-2">التحقق المباشر من صحة الشهادات</h2>
             <p class="text-gray-600 mb-8 max-w-lg mx-auto text-sm sm:text-base">
-                أدخل الاسم الكامل كما هو مدون في الشهادة أو أدخل الرقم التسلسلي الفريد للتحقق من الموثوقية وتنزيل نسختك المعتمدة.
+                أدخل الاسم الكامل كما هو مدون في الشهادة أو أدخل الرقم التسلسلي الفريد للتحقق وتنزيل نسختك المعتمدة.
             </p>
 
-            <!-- Search Form -->
             <form id="searchForm" onsubmit="handleSearch(event)" class="max-w-2xl mx-auto space-y-4">
                 <div class="relative flex items-center">
                     <input type="text" id="searchInput" required placeholder="أدخل اسمك الرباعي أو رقم الشهادة (مثال: IPSF-2026-X89)..." 
@@ -92,7 +90,7 @@
             </form>
         </div>
 
-        <!-- 🚀 قسم الإعلانات الفعالة تحت شريط البحث مباشرة -->
+        <!-- 🚀 قسم الإعلانات الفعالة تحت شريط البحث (بأسلوب خبر جذاب) -->
         <div id="publicAdsContainer" class="space-y-4"></div>
 
         <!-- Search Results Section -->
@@ -109,12 +107,10 @@
                     <button onclick="closePreviewModal()" class="text-gray-400 hover:text-gray-700 text-2xl font-bold cursor-pointer">&times;</button>
                 </div>
 
-                <!-- Canvas Rendered Preview -->
                 <div class="flex justify-center bg-gray-100 p-2 sm:p-4 rounded-xl border overflow-hidden">
                     <canvas id="certCanvas" class="max-w-full h-auto rounded shadow-lg border border-gray-300"></canvas>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="flex flex-wrap gap-4 justify-center sm:justify-end pt-2 border-t">
                     <button onclick="closePreviewModal()" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl font-semibold text-gray-700 transition cursor-pointer">إلغاء</button>
                     <button id="printCertBtn" onclick="printCertificate()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md transition flex items-center gap-2 cursor-pointer">
@@ -128,11 +124,10 @@
         </div>
     </main>
 
-    <!-- 🌟 لوحة الإشراف المتكاملة (تظهر فقط بعد تسجيل دخول المشرف بنجاح) -->
+    <!-- 🌟 لوحة الإشراف المتكاملة -->
     <div id="adminPanel" class="hidden fixed inset-0 bg-gray-900 bg-opacity-95 z-50 overflow-y-auto p-4 sm:p-8">
         <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl border-2 border-brand-gold overflow-hidden my-6">
             
-            <!-- رأس لوحة الإشراف -->
             <div class="bg-brand-dark text-white p-6 flex justify-between items-center border-b-2 border-brand-gold">
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-user-shield text-brand-gold text-2xl"></i>
@@ -148,7 +143,7 @@
 
             <div class="p-6 sm:p-8 space-y-8">
                 
-                <!-- المربعين الرئيسيين (1. إضافة شهائد + 2. إضافة إعلان) -->
+                <!-- المربعين الرئيسيين (1. إضافة شهائد + 2. إضافة إعلان مع رفع ملفات) -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     
                     <!-- المربع 1: إضافة شهادة -->
@@ -178,31 +173,41 @@
                         </button>
                     </div>
 
-                    <!-- المربع 2: إضافة إعلان -->
+                    <!-- المربع 2: إضافة إعلان (مع رفع صورة أو فيديو من الجهاز) -->
                     <div class="bg-brand-light p-6 rounded-2xl border-2 border-brand-primary/30 shadow-sm space-y-4">
                         <div class="flex items-center gap-2 text-brand-dark font-black text-lg border-b pb-3">
                             <i class="fa-solid fa-bullhorn text-brand-gold"></i>
-                            <h3>إضافة إعلان جديد</h3>
+                            <h3>إضافة إعلان جديد (صورة/فيديو)</h3>
                         </div>
                         <form onsubmit="publishAd(event)" class="space-y-3">
                             <div>
                                 <label class="block text-xs font-bold text-gray-700 mb-1">عنوان الإعلان الرسمي:</label>
-                                <input type="text" id="adTitle" placeholder="مثال: فتح باب التسجيل في الدبلوم الدولي" required class="w-full p-3 border rounded-xl text-xs bg-white">
+                                <input type="text" id="adTitle" placeholder="مثال: بيان الأمانة العامة" required class="w-full p-3 border rounded-xl text-xs bg-white">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">نص الإعلان أو التفاصيل:</label>
-                                <textarea id="adContent" placeholder="تفاصيل الإعلان..." rows="4" class="w-full p-3 border rounded-xl text-xs bg-white"></textarea>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">نص الخبر الإعلاني:</label>
+                                <textarea id="adContent" placeholder="تفاصيل الخبر الإعلاني..." rows="3" class="w-full p-3 border rounded-xl text-xs bg-white"></textarea>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 mb-1">رابط صورة أو فيديو (URL):</label>
-                                <input type="url" id="adMediaUrl" placeholder="https://example.com/banner.jpg" class="w-full p-3 border rounded-xl text-xs bg-white">
+                                <label class="block text-xs font-bold text-gray-700 mb-1">رفع صورة أو فيديو الإعلان من الجهاز:</label>
+                                <input type="file" id="adMediaFile" accept="image/*,video/*" class="w-full text-xs border rounded-xl p-2 bg-white cursor-pointer">
                             </div>
                             <button type="submit" class="w-full py-3 bg-brand-dark hover:bg-brand-primary text-brand-gold font-bold text-xs rounded-xl shadow transition cursor-pointer">
-                                نشر الإعلان بالواجهة (+)
+                                نشر الإعلان كخبر بالواجهة (+)
                             </button>
                         </form>
                     </div>
 
+                </div>
+
+                <!-- قائمة إدارة الإعلانات الحالية (تعديل وحذف) -->
+                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-4">
+                    <h3 class="text-lg font-bold text-brand-dark flex items-center gap-2">
+                        <i class="fa-solid fa-newspaper text-brand-primary"></i> إدارة الإعلانات المنشورة (تعديل وحذف)
+                    </h3>
+                    <div id="adminAdsList" class="space-y-2 max-h-60 overflow-y-auto">
+                        <!-- تضاف الإعلانات هنا ديناميكياً -->
+                    </div>
                 </div>
 
                 <!-- قسم الإحصائيات والخريطة التفاعلية -->
@@ -240,7 +245,6 @@
                         <div class="h-44 bg-brand-primary/30 rounded-xl flex items-center justify-center relative overflow-hidden border border-brand-gold/20">
                             <div class="absolute inset-0 opacity-15 bg-[radial-gradient(#D4AF37_1px,transparent_1px)] [background-size:14px_14px]"></div>
                             
-                            <!-- الأسهم التفاعلية والمؤشرات الجغرافية -->
                             <div class="relative z-10 w-full px-6 flex justify-around items-center text-center">
                                 <div class="space-y-1">
                                     <i class="fa-solid fa-location-dot text-brand-gold text-xl"></i>
@@ -271,9 +275,9 @@
                         <span>مشاهدة كل الشهائد وإدارتها</span>
                     </button>
 
-                    <!-- القائمة المنسدلة للشهادات مع أزرار التحكم والخيارات (ثلاث نقاط) -->
+                    <!-- القائمة المنسدلة للشهائد مزودة بالتفاصيل ورقم التسلسل لتمييز الأسماء المتشابهة -->
                     <div id="allCertificatesDropdown" class="hidden bg-white rounded-2xl border border-gray-200 shadow-xl p-4 space-y-3 max-h-96 overflow-y-auto">
-                        <!-- يتم تعبئة الشهادات والخيارات هنا ديناميكياً -->
+                        <!-- تضاف الشهائد هنا ديناميكياً -->
                     </div>
                 </div>
 
@@ -321,7 +325,6 @@
             fetchPublicAds();
         });
 
-        // دوال التحكم بالنافذة المنبثقة لتسجيل الدخول
         function openLoginModal() {
             document.getElementById('loginModal').classList.remove('hidden');
         }
@@ -330,42 +333,118 @@
             document.getElementById('loginModal').classList.add('hidden');
         }
 
-        // جلب ونشر الإعلانات بالواجهة العامة
+        // رفع ملف الإعلان (صورة أو فيديو) إلى Supabase Storage
+        async function uploadAdMedia(file) {
+            if (!file) return "";
+            const fileExt = file.name.split('.').pop();
+            const fileName = `ad_${Date.now()}_${Math.random().toString(36).substring(2,7)}.${fileExt}`;
+            const { data, error } = await supabaseClient.storage.from('uploads').upload(`ads/${fileName}`, file);
+            if (error) throw error;
+            const { data: urlData } = supabaseClient.storage.from('uploads').getPublicUrl(`ads/${fileName}`);
+            return urlData.publicUrl;
+        }
+
+        // جلب وعرض الإعلانات بأسلوب خبر جذاب في الواجهة
         async function fetchPublicAds() {
             const container = document.getElementById('publicAdsContainer');
             if(!container) return;
             try {
                 const { data } = await supabaseClient.from('ads').select('*').eq('is_active', true).order('created_at', { ascending: false });
                 if(data && data.length > 0) {
-                    container.innerHTML = data.map(ad => `
-                        <div class="bg-gradient-to-r from-brand-dark to-brand-primary text-white p-5 rounded-2xl shadow-lg border border-brand-gold flex flex-col sm:flex-row items-center gap-4">
-                            ${ad.media_url ? `<img src="${ad.media_url}" class="w-full sm:w-32 h-24 object-cover rounded-xl border border-brand-gold shadow">` : ''}
-                            <div class="flex-1 text-right">
-                                <span class="bg-brand-gold text-brand-dark text-[10px] font-black px-2.5 py-0.5 rounded-full">إعلان رسمي</span>
-                                <h3 class="text-base font-bold text-brand-gold mt-1">${ad.title}</h3>
-                                <p class="text-xs text-gray-200 mt-1 leading-relaxed">${ad.content || ''}</p>
+                    container.innerHTML = data.map(ad => {
+                        const isVideo = ad.media_url && (ad.media_url.endsWith('.mp4') || ad.media_url.endsWith('.webm') || ad.media_url.includes('video'));
+                        return `
+                            <div class="bg-white rounded-2xl shadow-xl border-2 border-brand-gold/40 overflow-hidden flex flex-col md:flex-row items-center gap-4 p-5 transition hover:shadow-2xl">
+                                ${ad.media_url ? (
+                                    isVideo ? 
+                                    `<video src="${ad.media_url}" controls class="w-full md:w-48 h-32 object-cover rounded-xl border border-brand-gold"></video>` :
+                                    `<img src="${ad.media_url}" class="w-full md:w-48 h-32 object-cover rounded-xl border border-brand-gold shadow">`
+                                ) : ''}
+                                <div class="flex-1 text-right space-y-2">
+                                    <span class="bg-brand-primary text-brand-gold text-[11px] font-black px-3 py-1 rounded-full border border-brand-gold/30">
+                                        <i class="fa-solid fa-bullhorn ml-1"></i> خبر وبانر إعلاني رسمي
+                                    </span>
+                                    <h3 class="text-lg font-black text-brand-dark">${ad.title}</h3>
+                                    <p class="text-xs text-gray-600 leading-relaxed">${ad.content || ''}</p>
+                                </div>
                             </div>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = "";
                 }
             } catch(e) { console.error(e); }
         }
 
-        // إضافة إعلان جديد
+        // نشر إعلان جديد مع رفع الملف من الجهاز
         async function publishAd(e) {
             e.preventDefault();
             const title = document.getElementById('adTitle').value;
             const content = document.getElementById('adContent').value;
-            const media_url = document.getElementById('adMediaUrl').value;
+            const mediaFile = document.getElementById('adMediaFile').files[0];
 
-            const { error } = await supabaseClient.from('ads').insert([{ title, content, media_url, is_active: true }]);
-            if(error) alert("خطأ في نشر الإعلان: " + error.message);
-            else { 
-                alert("تم نشر الإعلان بنجاح في الواجهة العامة!"); 
+            try {
+                let media_url = "";
+                if(mediaFile) {
+                    media_url = await uploadAdMedia(mediaFile);
+                }
+
+                const { error } = await supabaseClient.from('ads').insert([{ title, content, media_url, is_active: true }]);
+                if(error) throw error;
+
+                alert("تم نشر الإعلان كخبر بالواجهة العامة بنجاح!");
                 document.getElementById('adTitle').value = "";
                 document.getElementById('adContent').value = "";
-                document.getElementById('adMediaUrl').value = "";
-                fetchPublicAds(); 
+                document.getElementById('adMediaFile').value = "";
+                fetchPublicAds();
+                loadAdminAdsList();
+            } catch(err) {
+                alert("خطأ في نشر الإعلان: " + err.message);
+            }
+        }
+
+        // تحميل قائمة الإعلانات للمشرف (للتعديل والحذف)
+        async function loadAdminAdsList() {
+            const listContainer = document.getElementById('adminAdsList');
+            if(!listContainer) return;
+            try {
+                const { data } = await supabaseClient.from('ads').select('*').order('created_at', { ascending: false });
+                if(!data || data.length === 0) {
+                    listContainer.innerHTML = `<p class="text-xs text-gray-400 text-center py-3">لا توجد إعلانات منشورة حالياً.</p>`;
+                    return;
+                }
+                listContainer.innerHTML = data.map(ad => `
+                    <div class="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-200 text-xs">
+                        <div>
+                            <b class="text-brand-dark">${ad.title}</b>
+                            <span class="text-[10px] text-gray-400 block">${ad.content ? ad.content.substring(0, 40) + '...' : ''}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="editAd('${ad.id}', '${ad.title}', '${ad.content || ''}')" class="px-2.5 py-1 bg-blue-600 text-white rounded-lg font-bold cursor-pointer">تعديل</button>
+                            <button onclick="deleteAd('${ad.id}')" class="px-2.5 py-1 bg-red-600 text-white rounded-lg font-bold cursor-pointer">حذف</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        // حذف إعلان
+        async function deleteAd(id) {
+            if(confirm("هل أنت متأكد من حذف هذا الإعلان نهائياً؟")) {
+                const { error } = await supabaseClient.from('ads').delete().eq('id', id);
+                if(error) alert(error.message);
+                else { alert("تم حذف الإعلان بنجاح."); fetchPublicAds(); loadAdminAdsList(); }
+            }
+        }
+
+        // تعديل إعلان
+        async function editAd(id, currentTitle, currentContent) {
+            const newTitle = prompt("أدخل العنوان الجديد للإعلان:", currentTitle);
+            if(newTitle !== null) {
+                const newContent = prompt("أدخل نص الإعلان الجديد:", currentContent);
+                const { error } = await supabaseClient.from('ads').update({ title: newTitle, content: newContent }).eq('id', id);
+                if(error) alert(error.message);
+                else { alert("تم تحديث الإعلان بنجاح!"); fetchPublicAds(); loadAdminAdsList(); }
             }
         }
 
@@ -375,19 +454,19 @@
             box.classList.toggle('hidden');
             if(!box.classList.contains('hidden')) {
                 loadAllCertificatesForAdmin();
+                loadAdminAdsList();
             }
         }
 
-        // جلب الشهادات مع زر المعاينة وقائمة الثلاث نقاط للتحكم
+        // جلب الشهادات مع تفاصيل دقيقة (الاسم + رقم الشهادة/التسلسل لتجنب الخلط بين الأسماء المتشابهة)
         async function loadAllCertificatesForAdmin() {
             const box = document.getElementById('allCertificatesDropdown');
-            box.innerHTML = `<p class="text-center text-xs text-gray-400 py-4"><i class="fa-solid fa-spinner fa-spin text-brand-gold text-lg mb-1 block"></i> جاري تحميل الشهادات والخيارات...</p>`;
+            box.innerHTML = `<p class="text-center text-xs text-gray-400 py-4"><i class="fa-solid fa-spinner fa-spin text-brand-gold text-lg mb-1 block"></i> جاري تحميل السجلات...</p>`;
             
             try {
                 const { data, error } = await supabaseClient.from('certificates').select('*').order('created_at', { ascending: false });
                 if(error) throw error;
                 
-                // تحديث عداد الإحصائيات
                 const statTotalCerts = document.getElementById('statTotalCerts');
                 if(statTotalCerts) statTotalCerts.innerText = data ? data.length : 0;
 
@@ -400,15 +479,16 @@
                     <div class="flex items-center justify-between p-3.5 bg-gray-50 rounded-xl border border-gray-200 text-xs hover:border-brand-gold transition">
                         <div>
                             <span class="font-extrabold text-brand-dark block text-sm">${cert.name}</span>
-                            <span class="text-[10px] text-gray-400">رقم الشهادة: ${cert.cert_code || 'IPSF-2026'}</span>
+                            <span class="text-[10px] text-gray-500 bg-brand-gold/10 px-2 py-0.5 rounded border border-brand-gold/20 inline-block mt-0.5 font-mono">
+                                رقم التحقق: ${cert.cert_code || 'IPSF-2026'} | الإصدار: ${cert.created_at ? cert.created_at.substring(0,10) : 'حديث'}
+                            </span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <!-- زر المعاينة -->
+                            <!-- زر المعاينة المربوط حصرياً بالـ ID للشهادة لضمان عدم تداخل الأسماء المتشابهة -->
                             <button onclick="previewCertificate('${cert.id}')" class="px-3.5 py-1.5 bg-brand-primary hover:bg-brand-dark text-brand-gold rounded-lg font-bold transition flex items-center gap-1 cursor-pointer">
                                 <i class="fa-solid fa-eye text-[11px]"></i> المعاينة
                             </button>
                             
-                            <!-- قائمة الثلاث نقاط للتحكم المتقدم -->
                             <div class="relative">
                                 <button onclick="toggleOptionsDropdown('${cert.id}')" class="p-1.5 px-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-black text-gray-700 transition cursor-pointer">
                                     <i class="fa-solid fa-ellipsis-vertical"></i>
@@ -420,7 +500,7 @@
                                         <span>المعاينات: <b>${cert.views_count || 0}</b></span>
                                     </div>
                                     <button onclick="editCertificate('${cert.id}', '${cert.name}')" class="w-full text-right px-3 py-1.5 hover:bg-gray-100 rounded-lg font-bold text-gray-700 flex items-center gap-2 cursor-pointer">
-                                        <i class="fa-solid fa-pen-to-square text-blue-600"></i> تعديل البيانات
+                                        <i class="fa-solid fa-pen-to-square text-blue-600"></i> تعديل الاسم
                                     </button>
                                     <button onclick="hideCertificateTemp('${cert.id}')" class="w-full text-right px-3 py-1.5 hover:bg-amber-50 rounded-lg font-bold text-amber-600 flex items-center gap-2 cursor-pointer">
                                         <i class="fa-solid fa-eye-slash text-amber-600"></i> إخفاء مؤقت بجدولة
@@ -438,7 +518,6 @@
             }
         }
 
-        // التبديل بين القوائم المنسدلة للثلاث نقاط
         function toggleOptionsDropdown(id) {
             document.querySelectorAll('[id^="options_"]').forEach(el => {
                 if(el.id !== `options_${id}`) el.classList.add('hidden');
@@ -447,32 +526,23 @@
             if(drop) drop.classList.toggle('hidden');
         }
 
-        // حذف الشهادة
         async function deleteCertificate(id) {
             if(confirm("هل أنت متأكد من حذف هذه الشهادة نهائياً من النظام؟")) {
                 const { error } = await supabaseClient.from('certificates').delete().eq('id', id);
-                if(error) alert("حدث خطأ أثناء الحذف: " + error.message);
-                else { 
-                    alert("تم حذف الشهادة بنجاح."); 
-                    loadAllCertificatesForAdmin(); 
-                }
+                if(error) alert("خطأ أثناء الحذف: " + error.message);
+                else { alert("تم حذف الشهادة بنجاح."); loadAllCertificatesForAdmin(); }
             }
         }
 
-        // تعديل بيانات الشهادة
         async function editCertificate(id, currentName) {
             const newName = prompt("أدخل الاسم الجديد المعتمد للشهادة:", currentName);
             if(newName && newName.trim() !== "") {
                 const { error } = await supabaseClient.from('certificates').update({ name: newName.trim() }).eq('id', id);
                 if(error) alert("فشل التعديل: " + error.message);
-                else { 
-                    alert("تم تعديل الاسم بنجاح!"); 
-                    loadAllCertificatesForAdmin(); 
-                }
+                else { alert("تم تعديل الاسم بنجاح!"); loadAllCertificatesForAdmin(); }
             }
         }
 
-        // إخفاء مؤقت بجدولة زمنية
         async function hideCertificateTemp(id) {
             const dateStr = prompt("حدد تاريخ انتهاء الإخفاء المؤقت (مثال: YYYY-MM-DD):");
             if(dateStr) {
