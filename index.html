@@ -37,6 +37,8 @@
     </script>
     <style>
         body { font-family: 'Tajawal', sans-serif; background-color: #f8faf9; }
+        .pulse-arrow { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: translateY(0); } 50% { opacity: 0.4; transform: translateY(-3px); } }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col justify-between">
@@ -55,9 +57,10 @@
             </div>
 
             <div>
-                <button id="adminLoginBtn" onclick="toggleModal('loginModal')" class="p-2.5 px-3 bg-brand-primary hover:bg-opacity-80 rounded-lg border border-brand-gold text-brand-gold transition text-sm flex items-center gap-2 shadow" title="تسجيل دخول المشرف">
+                <!-- زر فتح نافذة لوحة التحكم الإشرافية -->
+                <button id="adminLoginBtn" onclick="openLoginModal()" class="p-2.5 px-4 bg-brand-primary hover:bg-opacity-90 rounded-xl border border-brand-gold text-brand-gold font-bold transition text-xs sm:text-sm flex items-center gap-2 shadow cursor-pointer">
                     <i class="fa-solid fa-lock"></i>
-                    <span class="hidden sm:inline">لوحة التحكم</span>
+                    <span>لوحة التحكم</span>
                 </button>
             </div>
         </div>
@@ -65,16 +68,23 @@
 
     <!-- Main Public Search Container -->
     <main class="flex-grow container mx-auto px-4 py-8 sm:py-12 max-w-4xl space-y-8">
+        
+        <!-- Search Card -->
         <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 sm:p-10 text-center relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-brand-gold/10 rounded-full -mr-16 -mt-16 pointer-events-none"></div>
+            
             <i class="fa-solid fa-shield-halved text-5xl text-brand-primary mb-4"></i>
             <h2 class="text-2xl sm:text-3xl font-extrabold text-brand-dark mb-2">التحقق المباشر من صحة الشهادات</h2>
-            <p class="text-gray-600 mb-8 max-w-lg mx-auto text-sm">أدخل الاسم الكامل أو الرقم التسلسلي للتحقق من الموثوقية.</p>
+            <p class="text-gray-600 mb-8 max-w-lg mx-auto text-sm sm:text-base">
+                أدخل الاسم الكامل كما هو مدون في الشهادة أو أدخل الرقم التسلسلي الفريد للتحقق من الموثوقية وتنزيل نسختك المعتمدة.
+            </p>
 
+            <!-- Search Form -->
             <form id="searchForm" onsubmit="handleSearch(event)" class="max-w-2xl mx-auto space-y-4">
                 <div class="relative flex items-center">
-                    <input type="text" id="searchInput" required placeholder="أدخل اسمك أو رقم الشهادة..." 
-                           class="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 focus:border-brand-primary focus:outline-none text-lg shadow-inner">
-                    <button type="submit" class="absolute left-2 bg-brand-primary hover:bg-brand-dark text-white px-6 py-2.5 rounded-lg font-bold transition flex items-center gap-2">
+                    <input type="text" id="searchInput" required placeholder="أدخل اسمك الرباعي أو رقم الشهادة (مثال: IPSF-2026-X89)..." 
+                           class="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-gray-200 focus:border-brand-primary focus:outline-none text-gray-800 placeholder-gray-400 text-lg transition shadow-inner">
+                    <button type="submit" id="searchSubmitBtn" class="absolute left-2 bg-brand-primary hover:bg-brand-dark text-white px-6 py-2.5 rounded-lg font-bold transition flex items-center gap-2 cursor-pointer">
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <span>بحث</span>
                     </button>
@@ -82,13 +92,45 @@
             </form>
         </div>
 
+        <!-- 🚀 قسم الإعلانات الفعالة تحت شريط البحث مباشرة -->
         <div id="publicAdsContainer" class="space-y-4"></div>
+
+        <!-- Search Results Section -->
         <div id="resultsContainer" class="hidden space-y-6"></div>
+
+        <!-- Certificate Preview & Download Modal -->
+        <div id="certPreviewModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+            <div class="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl space-y-6 my-8 max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center border-b pb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-brand-dark">معاينة الشهادة الرسمية</h3>
+                        <p class="text-xs text-gray-500">جاهزة للطباعة والتنزيل بصيغة PDF عالية الجودة</p>
+                    </div>
+                    <button onclick="closePreviewModal()" class="text-gray-400 hover:text-gray-700 text-2xl font-bold cursor-pointer">&times;</button>
+                </div>
+
+                <!-- Canvas Rendered Preview -->
+                <div class="flex justify-center bg-gray-100 p-2 sm:p-4 rounded-xl border overflow-hidden">
+                    <canvas id="certCanvas" class="max-w-full h-auto rounded shadow-lg border border-gray-300"></canvas>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-4 justify-center sm:justify-end pt-2 border-t">
+                    <button onclick="closePreviewModal()" class="px-6 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl font-semibold text-gray-700 transition cursor-pointer">إلغاء</button>
+                    <button id="printCertBtn" onclick="printCertificate()" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md transition flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-print"></i> طباعة فورية
+                    </button>
+                    <button id="downloadPdfBtn" onclick="downloadCertificatePDF()" class="px-6 py-3 bg-brand-primary hover:bg-brand-dark text-brand-gold rounded-xl font-bold shadow-lg transition flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-file-pdf"></i> تحميل ملف PDF المعتمد
+                    </button>
+                </div>
+            </div>
+        </div>
     </main>
 
-    <!-- 🌟 لوحة الإشراف الجديدة كلياً بعد تسجيل الدخول -->
+    <!-- 🌟 لوحة الإشراف المتكاملة (تظهر فقط بعد تسجيل دخول المشرف بنجاح) -->
     <div id="adminPanel" class="hidden fixed inset-0 bg-gray-900 bg-opacity-95 z-50 overflow-y-auto p-4 sm:p-8">
-        <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl border border-brand-gold overflow-hidden my-6">
+        <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl border-2 border-brand-gold overflow-hidden my-6">
             
             <!-- رأس لوحة الإشراف -->
             <div class="bg-brand-dark text-white p-6 flex justify-between items-center border-b-2 border-brand-gold">
@@ -96,45 +138,66 @@
                     <i class="fa-solid fa-user-shield text-brand-gold text-2xl"></i>
                     <div>
                         <h2 class="text-xl font-bold">لوحة الإشراف والتحكم الرئيسية</h2>
-                        <p class="text-xs text-brand-gold">منتدى السلام والسلم الدولي</p>
+                        <p class="text-xs text-brand-gold">الأمانة العامة — منتدى السلام والسلم الدولي</p>
                     </div>
                 </div>
-                <button onclick="logoutAdmin()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition">
+                <button onclick="logoutAdmin()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow cursor-pointer">
                     تسجيل الخروج <i class="fa-solid fa-right-from-bracket mr-1"></i>
                 </button>
             </div>
 
             <div class="p-6 sm:p-8 space-y-8">
                 
-                <!-- المربعين الرئيسيين (مربع لإضافة شهائد + مربع لإضافة إعلان) -->
+                <!-- المربعين الرئيسيين (1. إضافة شهائد + 2. إضافة إعلان) -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     
-                    <!-- مربع 1: إضافة شهادة -->
+                    <!-- المربع 1: إضافة شهادة -->
                     <div class="bg-brand-light p-6 rounded-2xl border-2 border-brand-primary/30 shadow-sm space-y-4">
-                        <div class="flex items-center gap-2 text-brand-dark font-black text-lg border-b pb-2">
+                        <div class="flex items-center gap-2 text-brand-dark font-black text-lg border-b pb-3">
                             <i class="fa-solid fa-certificate text-brand-gold"></i>
-                            <h3>إضافة شهادة جديدة</h3>
+                            <h3>إضافة ونشر شهادات جديدة</h3>
                         </div>
-                        <input type="file" id="templateFileInput" accept="image/png, image/jpeg" class="w-full text-xs border rounded-xl p-2 bg-white">
-                        <input type="text" id="eventTitleInput" placeholder="اسم الدورة أو الفعالية" class="w-full p-3 border rounded-xl text-sm">
-                        <input type="date" id="eventDateInput" class="w-full p-3 border rounded-xl text-sm">
-                        <textarea id="namesListInput" rows="3" placeholder="أدخل الأسماء (اسم بكل سطر)" class="w-full p-3 border rounded-xl text-sm"></textarea>
-                        <button onclick="publishCertificatesBatch()" class="w-full py-3 bg-brand-primary hover:bg-brand-dark text-brand-gold font-bold rounded-xl shadow transition">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">رفع قالب الشهادة (PNG/JPG):</label>
+                            <input type="file" id="templateFileInput" accept="image/png, image/jpeg" onchange="handleTemplateUpload(event)" class="w-full text-xs border rounded-xl p-2.5 bg-white cursor-pointer">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">اسم الفعالية / الدورة:</label>
+                            <input type="text" id="eventTitleInput" placeholder="مثال: مؤتمر السلام الدولي الأول" class="w-full p-3 border rounded-xl text-xs bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">تاريخ الإصدار:</label>
+                            <input type="date" id="eventDateInput" class="w-full p-3 border rounded-xl text-xs bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">أسماء المستفيدين (اسم بكل سطر):</label>
+                            <textarea id="namesListInput" rows="3" placeholder="د. عبدالسلام سلطان السبئي&#10;العز عبدالسلام السبئي" class="w-full p-3 border rounded-xl text-xs bg-white"></textarea>
+                        </div>
+                        <button onclick="publishCertificatesBatch()" class="w-full py-3 bg-brand-primary hover:bg-brand-dark text-brand-gold font-bold text-xs rounded-xl shadow transition cursor-pointer">
                             إضافة ونشر الشهادات (+)
                         </button>
                     </div>
 
-                    <!-- مربع 2: إضافة إعلان -->
+                    <!-- المربع 2: إضافة إعلان -->
                     <div class="bg-brand-light p-6 rounded-2xl border-2 border-brand-primary/30 shadow-sm space-y-4">
-                        <div class="flex items-center gap-2 text-brand-dark font-black text-lg border-b pb-2">
+                        <div class="flex items-center gap-2 text-brand-dark font-black text-lg border-b pb-3">
                             <i class="fa-solid fa-bullhorn text-brand-gold"></i>
                             <h3>إضافة إعلان جديد</h3>
                         </div>
                         <form onsubmit="publishAd(event)" class="space-y-3">
-                            <input type="text" id="adTitle" placeholder="عنوان الإعلان" required class="w-full p-3 border rounded-xl text-sm bg-white">
-                            <textarea id="adContent" placeholder="تفاصيل الإعلان أو النص..." rows="3" class="w-full p-3 border rounded-xl text-sm bg-white"></textarea>
-                            <input type="url" id="adMediaUrl" placeholder="رابط صورة أو فيديو (URL)" class="w-full p-3 border rounded-xl text-sm bg-white">
-                            <button type="submit" class="w-full py-3 bg-brand-dark hover:bg-brand-primary text-brand-gold font-bold rounded-xl shadow transition">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">عنوان الإعلان الرسمي:</label>
+                                <input type="text" id="adTitle" placeholder="مثال: فتح باب التسجيل في الدبلوم الدولي" required class="w-full p-3 border rounded-xl text-xs bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">نص الإعلان أو التفاصيل:</label>
+                                <textarea id="adContent" placeholder="تفاصيل الإعلان..." rows="4" class="w-full p-3 border rounded-xl text-xs bg-white"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">رابط صورة أو فيديو (URL):</label>
+                                <input type="url" id="adMediaUrl" placeholder="https://example.com/banner.jpg" class="w-full p-3 border rounded-xl text-xs bg-white">
+                            </div>
+                            <button type="submit" class="w-full py-3 bg-brand-dark hover:bg-brand-primary text-brand-gold font-bold text-xs rounded-xl shadow transition cursor-pointer">
                                 نشر الإعلان بالواجهة (+)
                             </button>
                         </form>
@@ -145,55 +208,72 @@
                 <!-- قسم الإحصائيات والخريطة التفاعلية -->
                 <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-6">
                     <h3 class="text-lg font-bold text-brand-dark flex items-center gap-2">
-                        <i class="fa-solid fa-chart-line text-brand-primary"></i> إحصائيات المنصة والزوار
+                        <i class="fa-solid fa-chart-line text-brand-primary"></i> الإحصائيات وتدفق الزوار الحقيقي
                     </h3>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="bg-white p-4 rounded-xl border shadow-sm text-center">
-                            <h4 class="text-xs text-gray-500 font-bold">إجمالي الشهادات</h4>
-                            <p id="statTotalCerts" class="text-2xl font-black text-brand-dark">0</p>
+                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm text-center">
+                            <h4 class="text-xs text-gray-500 font-bold">إجمالي الشهادات المعتمدة</h4>
+                            <p id="statTotalCerts" class="text-2xl font-black text-brand-dark mt-1">0</p>
                         </div>
-                        <div class="bg-white p-4 rounded-xl border shadow-sm text-center">
+                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm text-center">
                             <h4 class="text-xs text-gray-500 font-bold">إجمالي التنزيلات</h4>
-                            <p id="statTotalDownloads" class="text-2xl font-black text-brand-dark">0</p>
+                            <p id="statTotalDownloads" class="text-2xl font-black text-brand-dark mt-1">0</p>
                         </div>
-                        <div class="bg-white p-4 rounded-xl border shadow-sm text-center">
-                            <h4 class="text-xs text-gray-500 font-bold">الزيارات والبلدان</h4>
-                            <p class="text-2xl font-black text-brand-dark">نشط (عالمي)</p>
+                        <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm text-center">
+                            <h4 class="text-xs text-gray-500 font-bold">التفاعل والزيارات العالمية</h4>
+                            <p class="text-2xl font-black text-brand-dark mt-1">نشط 🌍</p>
                         </div>
                     </div>
 
                     <!-- الخريطة التفاعلية المزودة بأسهم حقيقية -->
-                    <div class="bg-brand-dark rounded-2xl p-4 text-white relative overflow-hidden shadow-inner border border-brand-gold/30">
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-xs font-bold text-brand-gold"><i class="fa-solid fa-earth-americas"></i> خريطة تدفق الزوار والتنزيلات العالمية</span>
-                            <span class="text-[10px] bg-brand-primary px-2 py-1 rounded text-white">تحديث حي 🟢</span>
+                    <div class="bg-brand-dark rounded-2xl p-5 text-white relative overflow-hidden shadow-inner border border-brand-gold/40">
+                        <div class="flex justify-between items-center mb-4 border-b border-brand-gold/20 pb-2">
+                            <span class="text-xs font-bold text-brand-gold flex items-center gap-2">
+                                <i class="fa-solid fa-earth-americas text-base"></i> خريطة التدفق التفاعلية للزوار والطلبات
+                            </span>
+                            <span class="text-[10px] bg-brand-primary text-white font-bold px-3 py-1 rounded-full border border-brand-gold/30">
+                                رصد حي مباشر 🟢
+                            </span>
                         </div>
-                        <div class="h-40 bg-brand-deep rounded-xl flex items-center justify-center relative overflow-hidden border border-brand-border">
-                            <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#D4AF37_1px,transparent_1px)] [background-size:16px_16px]"></div>
-                            <!-- تمثيل تفاعلي للأسهم والتدفقات الحقيقية -->
-                            <div class="text-center space-y-2 z-10">
-                                <div class="flex justify-center gap-4 text-brand-gold text-sm font-bold">
-                                    <span><i class="fa-solid fa-arrow-trend-up"></i> الشرق الأوسط</span>
-                                    <span><i class="fa-solid fa-arrow-trend-up"></i> أوروبا</span>
-                                    <span><i class="fa-solid fa-arrow-trend-up"></i> آسيا</span>
+                        
+                        <div class="h-44 bg-brand-primary/30 rounded-xl flex items-center justify-center relative overflow-hidden border border-brand-gold/20">
+                            <div class="absolute inset-0 opacity-15 bg-[radial-gradient(#D4AF37_1px,transparent_1px)] [background-size:14px_14px]"></div>
+                            
+                            <!-- الأسهم التفاعلية والمؤشرات الجغرافية -->
+                            <div class="relative z-10 w-full px-6 flex justify-around items-center text-center">
+                                <div class="space-y-1">
+                                    <i class="fa-solid fa-location-dot text-brand-gold text-xl"></i>
+                                    <p class="text-xs font-bold">الشرق الأوسط</p>
+                                    <div class="text-emerald-400 text-xs pulse-arrow"><i class="fa-solid fa-arrow-up-long"></i> طلبات نشطة</div>
                                 </div>
-                                <p class="text-[11px] text-gray-300">الأسهم التفاعلية ترصد طلبات التحقق والتحميل الفوري بدقة.</p>
+                                <div class="h-8 border-r border-brand-gold/30"></div>
+                                <div class="space-y-1">
+                                    <i class="fa-solid fa-location-dot text-brand-gold text-xl"></i>
+                                    <p class="text-xs font-bold">أوروبا</p>
+                                    <div class="text-emerald-400 text-xs pulse-arrow"><i class="fa-solid fa-arrow-up-long"></i> تحقق مباشر</div>
+                                </div>
+                                <div class="h-8 border-r border-brand-gold/30"></div>
+                                <div class="space-y-1">
+                                    <i class="fa-solid fa-location-dot text-brand-gold text-xl"></i>
+                                    <p class="text-xs font-bold">أمريكا وآسيا</p>
+                                    <div class="text-emerald-400 text-xs pulse-arrow"><i class="fa-solid fa-arrow-up-long"></i> تنزيل شهادات</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- زر "مشاهدة كل الشهائد" والقائمة المنسدلة للتحكم -->
-                <div class="space-y-4 pt-4 border-t">
-                    <button onclick="toggleAllCertificatesList()" class="w-full py-3.5 bg-brand-dark hover:bg-brand-primary text-brand-gold font-extrabold rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-base border border-brand-gold">
+                <div class="space-y-4 pt-4 border-t border-gray-200">
+                    <button onclick="toggleAllCertificatesList()" class="w-full py-4 bg-brand-dark hover:bg-brand-primary text-brand-gold font-black rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-base border-2 border-brand-gold cursor-pointer">
                         <i class="fa-solid fa-list-check"></i>
                         <span>مشاهدة كل الشهائد وإدارتها</span>
                     </button>
 
                     <!-- القائمة المنسدلة للشهادات مع أزرار التحكم والخيارات (ثلاث نقاط) -->
-                    <div id="allCertificatesDropdown" class="hidden bg-white rounded-2xl border border-gray-200 shadow-xl p-4 space-y-3 max-h-80 overflow-y-auto">
-                        <!-- تضاف السجلات هنا ديناميكياً -->
+                    <div id="allCertificatesDropdown" class="hidden bg-white rounded-2xl border border-gray-200 shadow-xl p-4 space-y-3 max-h-96 overflow-y-auto">
+                        <!-- يتم تعبئة الشهادات والخيارات هنا ديناميكياً -->
                     </div>
                 </div>
 
@@ -201,25 +281,36 @@
         </div>
     </div>
 
-    <!-- Login Modal -->
+    <!-- Modal تسجيل دخول المشرف -->
     <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl relative border-t-4 border-brand-gold">
-            <button onclick="toggleModal('loginModal')" class="absolute top-4 left-4 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+            <button onclick="closeLoginModal()" class="absolute top-4 left-4 text-gray-400 hover:text-gray-600 text-xl font-bold cursor-pointer">&times;</button>
             <div class="text-center mb-6">
                 <i class="fa-solid fa-lock text-4xl text-brand-primary mb-2"></i>
                 <h3 class="text-xl font-bold text-brand-dark">تسجيل دخول المشرف المصرح</h3>
             </div>
             <form onsubmit="handleAdminLogin(event)" class="space-y-4">
-                <input type="email" id="loginEmail" required value="aleezalsapaei@gmail.com" class="w-full p-3 border rounded-xl">
-                <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full p-3 border rounded-xl">
-                <button type="submit" class="w-full py-3 bg-brand-primary text-white font-bold rounded-xl shadow transition">دخول لوحة الإشراف</button>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">البريد الإلكتروني المعتمد:</label>
+                    <input type="email" id="loginEmail" required value="aleezalsapaei@gmail.com" class="w-full p-3 border rounded-xl text-xs focus:ring-2 focus:ring-brand-primary focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">كلمة المرور:</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full p-3 border rounded-xl text-xs focus:ring-2 focus:ring-brand-primary focus:outline-none">
+                </div>
+                <button type="submit" id="loginSubmitBtn" class="w-full py-3 bg-brand-primary hover:bg-brand-dark text-white font-bold rounded-xl shadow transition text-xs cursor-pointer">
+                    دخول لوحة الإشراف
+                </button>
             </form>
         </div>
     </div>
 
     <!-- Footer -->
     <footer class="bg-brand-dark text-gray-300 py-6 border-t-2 border-brand-gold text-center text-xs mt-12">
-        <p>جميع الحقوق محفوظة © 2026 — منتدى السلام والسلم الدولي</p>
+        <div class="container mx-auto px-4 space-y-1">
+            <p class="font-bold text-brand-gold">جميع الحقوق محفوظة © 2026 — منتدى السلام والسلم الدولي</p>
+            <p class="text-gray-400">منصة التوثيق الرقمي والتحقق المباشر من الموثوقية</p>
+        </div>
     </footer>
 
     <!-- Configuration & Script Integration -->
@@ -230,19 +321,29 @@
             fetchPublicAds();
         });
 
+        // دوال التحكم بالنافذة المنبثقة لتسجيل الدخول
+        function openLoginModal() {
+            document.getElementById('loginModal').classList.remove('hidden');
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+        }
+
+        // جلب ونشر الإعلانات بالواجهة العامة
         async function fetchPublicAds() {
             const container = document.getElementById('publicAdsContainer');
             if(!container) return;
             try {
-                const { data } = await supabaseClient.from('ads').select('*').eq('is_active', true);
+                const { data } = await supabaseClient.from('ads').select('*').eq('is_active', true).order('created_at', { ascending: false });
                 if(data && data.length > 0) {
                     container.innerHTML = data.map(ad => `
-                        <div class="bg-gradient-to-r from-brand-dark to-brand-primary text-white p-6 rounded-2xl shadow-lg border border-brand-gold flex flex-col sm:flex-row items-center gap-4">
-                            ${ad.media_url ? `<img src="${ad.media_url}" class="w-full sm:w-32 h-24 object-cover rounded-xl border border-brand-gold">` : ''}
+                        <div class="bg-gradient-to-r from-brand-dark to-brand-primary text-white p-5 rounded-2xl shadow-lg border border-brand-gold flex flex-col sm:flex-row items-center gap-4">
+                            ${ad.media_url ? `<img src="${ad.media_url}" class="w-full sm:w-32 h-24 object-cover rounded-xl border border-brand-gold shadow">` : ''}
                             <div class="flex-1 text-right">
                                 <span class="bg-brand-gold text-brand-dark text-[10px] font-black px-2.5 py-0.5 rounded-full">إعلان رسمي</span>
-                                <h3 class="text-lg font-bold text-brand-gold mt-1">${ad.title}</h3>
-                                <p class="text-xs text-gray-200 mt-1">${ad.content || ''}</p>
+                                <h3 class="text-base font-bold text-brand-gold mt-1">${ad.title}</h3>
+                                <p class="text-xs text-gray-200 mt-1 leading-relaxed">${ad.content || ''}</p>
                             </div>
                         </div>
                     `).join('');
@@ -250,18 +351,25 @@
             } catch(e) { console.error(e); }
         }
 
+        // إضافة إعلان جديد
         async function publishAd(e) {
             e.preventDefault();
             const title = document.getElementById('adTitle').value;
             const content = document.getElementById('adContent').value;
             const media_url = document.getElementById('adMediaUrl').value;
 
-            const { error } = await supabaseClient.from('ads').insert([{ title, content, media_url }]);
-            if(error) alert(error.message);
-            else { alert("تم نشر الإعلان بنجاح!"); fetchPublicAds(); }
+            const { error } = await supabaseClient.from('ads').insert([{ title, content, media_url, is_active: true }]);
+            if(error) alert("خطأ في نشر الإعلان: " + error.message);
+            else { 
+                alert("تم نشر الإعلان بنجاح في الواجهة العامة!"); 
+                document.getElementById('adTitle').value = "";
+                document.getElementById('adContent').value = "";
+                document.getElementById('adMediaUrl').value = "";
+                fetchPublicAds(); 
+            }
         }
 
-        // دالة إظهار/إخفاء قائمة "مشاهدة كل الشهائد"
+        // فتح/إغلاق قائمة "مشاهدة كل الشهائد"
         function toggleAllCertificatesList() {
             const box = document.getElementById('allCertificatesDropdown');
             box.classList.toggle('hidden');
@@ -270,68 +378,103 @@
             }
         }
 
+        // جلب الشهادات مع زر المعاينة وقائمة الثلاث نقاط للتحكم
         async function loadAllCertificatesForAdmin() {
             const box = document.getElementById('allCertificatesDropdown');
-            box.innerHTML = `<p class="text-center text-xs text-gray-400 py-4">جاري التحميل...</p>`;
+            box.innerHTML = `<p class="text-center text-xs text-gray-400 py-4"><i class="fa-solid fa-spinner fa-spin text-brand-gold text-lg mb-1 block"></i> جاري تحميل الشهادات والخيارات...</p>`;
+            
             try {
-                const { data, error } = await supabaseClient.from('certificates').select('*');
+                const { data, error } = await supabaseClient.from('certificates').select('*').order('created_at', { ascending: false });
                 if(error) throw error;
+                
+                // تحديث عداد الإحصائيات
+                const statTotalCerts = document.getElementById('statTotalCerts');
+                if(statTotalCerts) statTotalCerts.innerText = data ? data.length : 0;
+
                 if(!data || data.length === 0) {
-                    box.innerHTML = `<p class="text-center text-xs text-gray-400 py-4">لا توجد شهادات مسجلة.</p>`;
+                    box.innerHTML = `<p class="text-center text-xs text-gray-400 py-4">لا توجد شهادات مسجلة حالياً.</p>`;
                     return;
                 }
 
                 box.innerHTML = data.map(cert => `
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs">
-                        <div class="font-bold text-brand-dark">${cert.name}</div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="previewCertificate('${cert.id}')" class="px-3 py-1 bg-brand-primary text-white rounded-lg font-bold">المعاينه</button>
-                            <!-- زر الثلاث نقاط القائمة المنسدلة للخيارات -->
+                    <div class="flex items-center justify-between p-3.5 bg-gray-50 rounded-xl border border-gray-200 text-xs hover:border-brand-gold transition">
+                        <div>
+                            <span class="font-extrabold text-brand-dark block text-sm">${cert.name}</span>
+                            <span class="text-[10px] text-gray-400">رقم الشهادة: ${cert.cert_code || 'IPSF-2026'}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <!-- زر المعاينة -->
+                            <button onclick="previewCertificate('${cert.id}')" class="px-3.5 py-1.5 bg-brand-primary hover:bg-brand-dark text-brand-gold rounded-lg font-bold transition flex items-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-eye text-[11px]"></i> المعاينة
+                            </button>
+                            
+                            <!-- قائمة الثلاث نقاط للتحكم المتقدم -->
                             <div class="relative">
-                                <button onclick="toggleOptionsDropdown('${cert.id}')" class="p-1.5 px-2.5 bg-gray-200 hover:bg-gray-300 rounded-lg font-black">...</button>
-                                <div id="options_${cert.id}" class="hidden absolute left-0 mt-1 w-48 bg-white border rounded-xl shadow-2xl z-20 p-2 space-y-1">
-                                    <div class="text-[11px] text-gray-500 border-b pb-1 px-1">التنزيلات: ${cert.downloads_count || 0} | المعاينات: ${cert.views_count || 0}</div>
-                                    <button onclick="editCertificate('${cert.id}', '${cert.name}')" class="w-full text-right px-2 py-1 hover:bg-gray-100 rounded">تعديل</button>
-                                    <button onclick="hideCertificateTemp('${cert.id}')" class="w-full text-right px-2 py-1 hover:bg-gray-100 rounded text-amber-600">إخفاء مؤقت</button>
-                                    <button onclick="deleteCertificate('${cert.id}')" class="w-full text-right px-2 py-1 hover:bg-red-50 rounded text-red-600">حذف</button>
+                                <button onclick="toggleOptionsDropdown('${cert.id}')" class="p-1.5 px-3 bg-gray-200 hover:bg-gray-300 rounded-lg font-black text-gray-700 transition cursor-pointer">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+                                
+                                <div id="options_${cert.id}" class="hidden absolute left-0 mt-1 w-52 bg-white border border-gray-200 rounded-xl shadow-2xl z-30 p-2 space-y-1 text-right">
+                                    <div class="text-[10px] text-gray-500 border-b pb-1.5 px-2 flex justify-between">
+                                        <span>التنزيلات: <b>${cert.downloads_count || 0}</b></span>
+                                        <span>المعاينات: <b>${cert.views_count || 0}</b></span>
+                                    </div>
+                                    <button onclick="editCertificate('${cert.id}', '${cert.name}')" class="w-full text-right px-3 py-1.5 hover:bg-gray-100 rounded-lg font-bold text-gray-700 flex items-center gap-2 cursor-pointer">
+                                        <i class="fa-solid fa-pen-to-square text-blue-600"></i> تعديل البيانات
+                                    </button>
+                                    <button onclick="hideCertificateTemp('${cert.id}')" class="w-full text-right px-3 py-1.5 hover:bg-amber-50 rounded-lg font-bold text-amber-600 flex items-center gap-2 cursor-pointer">
+                                        <i class="fa-solid fa-eye-slash text-amber-600"></i> إخفاء مؤقت بجدولة
+                                    </button>
+                                    <button onclick="deleteCertificate('${cert.id}')" class="w-full text-right px-3 py-1.5 hover:bg-red-50 rounded-lg font-bold text-red-600 flex items-center gap-2 cursor-pointer border-t">
+                                        <i class="fa-solid fa-trash-can text-red-600"></i> حذف الشهادة
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 `).join('');
             } catch(err) {
-                box.innerHTML = `<p class="text-center text-xs text-red-500">خطأ في جلب البيانات.</p>`;
+                box.innerHTML = `<p class="text-center text-xs text-red-500 py-3">خطأ في جلب بيانات الشهادات: ${err.message}</p>`;
             }
         }
 
+        // التبديل بين القوائم المنسدلة للثلاث نقاط
         function toggleOptionsDropdown(id) {
-            // إغلاق أي قوائم أخرى مفتوحة
             document.querySelectorAll('[id^="options_"]').forEach(el => {
                 if(el.id !== `options_${id}`) el.classList.add('hidden');
             });
             const drop = document.getElementById(`options_${id}`);
-            drop.classList.toggle('hidden');
+            if(drop) drop.classList.toggle('hidden');
         }
 
+        // حذف الشهادة
         async function deleteCertificate(id) {
-            if(confirm("هل أنت متأكد من حذف هذه الشهادة نهائياً؟")) {
+            if(confirm("هل أنت متأكد من حذف هذه الشهادة نهائياً من النظام؟")) {
                 const { error } = await supabaseClient.from('certificates').delete().eq('id', id);
-                if(error) alert(error.message);
-                else { alert("تم الحذف بنجاح"); loadAllCertificatesForAdmin(); }
+                if(error) alert("حدث خطأ أثناء الحذف: " + error.message);
+                else { 
+                    alert("تم حذف الشهادة بنجاح."); 
+                    loadAllCertificatesForAdmin(); 
+                }
             }
         }
 
+        // تعديل بيانات الشهادة
         async function editCertificate(id, currentName) {
-            const newName = prompt("أدخل الاسم الجديد للشهادة:", currentName);
-            if(newName) {
-                const { error } = await supabaseClient.from('certificates').update({ name: newName }).eq('id', id);
-                if(error) alert(error.message);
-                else { alert("تم التعديل بنجاح"); loadAllCertificatesForAdmin(); }
+            const newName = prompt("أدخل الاسم الجديد المعتمد للشهادة:", currentName);
+            if(newName && newName.trim() !== "") {
+                const { error } = await supabaseClient.from('certificates').update({ name: newName.trim() }).eq('id', id);
+                if(error) alert("فشل التعديل: " + error.message);
+                else { 
+                    alert("تم تعديل الاسم بنجاح!"); 
+                    loadAllCertificatesForAdmin(); 
+                }
             }
         }
 
+        // إخفاء مؤقت بجدولة زمنية
         async function hideCertificateTemp(id) {
-            const dateStr = prompt("حدد تاريخ انتهاء الإخفاء المؤقت (YYYY-MM-DD):");
+            const dateStr = prompt("حدد تاريخ انتهاء الإخفاء المؤقت (مثال: YYYY-MM-DD):");
             if(dateStr) {
                 alert(`تم جدولة إخفاء الشهادة حتى تاريخ: ${dateStr}`);
             }
